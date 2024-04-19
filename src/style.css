@@ -1,0 +1,13 @@
+body {
+    margin: 0;
+    background: black;
+}
+
+canvas {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+}
