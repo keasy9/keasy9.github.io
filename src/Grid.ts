@@ -12,12 +12,12 @@ export class Grid {
     private readonly canvas: HTMLCanvasElement;
     readonly ctx: CanvasRenderingContext2D;
     private scale: number = 30;
-    private cells: CellSingletone = new CellSingletone(this);
+    private cells: CellSingleton = new CellSingleton(this);
     private sizeX: number = 0;
     private sizeY: number = 0;
     private width: number = 0;
     private height: number = 0;
-    readonly backgroundColor: string = '#2b2a33';
+    public readonly backgroundColor: string = '#2b2a33';
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -28,7 +28,7 @@ export class Grid {
         window.addEventListener('resize', () => this.resize());
     }
 
-    resize(scale?: number): Grid {
+    public resize(scale?: number): this {
         this.scale = scale ?? this.scale;
         this.width = this.canvas.width = innerWidth - (innerWidth % this.scale);
         this.height = this.canvas.height = innerHeight - (innerHeight % this.scale);
@@ -39,7 +39,7 @@ export class Grid {
         return this.redraw();
     }
 
-    redraw(): Grid {
+    public redraw(): this {
         for (let x: number = 0; x <= this.width / this.scale; x ++) {
             for (let y: number = 0; y <= this.height / this.scale; y ++) {
                 this.cell(x, y).paint(this.backgroundColor);
@@ -49,23 +49,27 @@ export class Grid {
         return this;
     }
 
-    cell(x: number, y: number): CellSingletone {
+    public cell(x: number, y: number): CellSingleton {
         return this.cells.get(x, y);
     }
 
-    getScale(): number {
+    public getScale(): number {
         return this.scale;
     }
 
-    getSize(): {x: number, y: number} {
+    public getSize(): {x: number, y: number} {
         return {
             x: this.sizeX,
             y: this.sizeY,
         };
     }
+
+    public cellExists(x: number, y: number): boolean {
+        return (0 <= x && x < this.sizeX && y >= 0 && y < this.sizeY);
+    }
 }
 
-class CellSingletone {
+class CellSingleton {
     private cells: CellList<Cell> = {};
     private data: Cell;
 
@@ -73,7 +77,7 @@ class CellSingletone {
         this.data = this.cells['0_0'];
     }
 
-    get(x: number, y: number): CellSingletone {
+    public get(x: number, y: number): this {
         const cellKey = `${x.toString()}_${y.toString()}`;
         this.cells[cellKey] ??= {x: x, y: y};
         this.data = this.cells[cellKey];
@@ -88,7 +92,7 @@ class CellSingletone {
         return (y ?? this.data.y) * this.grid.getScale();
     }
 
-    paint(color: string | number, g?: number, b?: number, a?: number): CellSingletone {
+    public paint(color: string | number, g?: number, b?: number, a?: number): this {
         this.grid.ctx.beginPath();
         if (typeof color === 'number') {
             color = `rgba(${color}, ${g}, ${b}, ${a ?? 255})`
@@ -107,13 +111,13 @@ class CellSingletone {
         return this;
     }
 
-    move(x: number, y:number) {
+    public move(x: number, y:number): this {
         const currentColor: Uint8ClampedArray = this.grid.ctx.getImageData(this.getX() + 1, this.getY() + 1, 1, 1).data;
         this.clear();
         return this.get(x, y).paint(currentColor[0], currentColor[1], currentColor[2], currentColor[3])
     }
 
-    swap(x: number, y: number) {
+    public swap(x: number, y: number): this {
         const selfColor: Uint8ClampedArray = this.grid.ctx.getImageData(this.getX() + 1, this.getY() + 1, 1, 1).data;
         const targetColor: Uint8ClampedArray = this.grid.ctx.getImageData(this.getX(x) + 1, this.getY(y) + 1, 1, 1).data;
 
@@ -121,7 +125,7 @@ class CellSingletone {
         return this.get(x, y).paint(selfColor[0], selfColor[1], selfColor[2], selfColor[3]);
     }
 
-    clear() {
+    public clear(): this {
         return this.paint(this.grid.backgroundColor);
     }
 }
