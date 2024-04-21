@@ -23,8 +23,8 @@ export class Grid {
         this.width = this.canvas.width = innerWidth - (innerWidth % this.scale);
         this.height = this.canvas.height = innerHeight - (innerHeight % this.scale);
 
-        this.sizeX = this.width / this.scale;
-        this.sizeY = this.height / this.scale;
+        this.sizeX = (this.width / this.scale) - 1;
+        this.sizeY = (this.height / this.scale) - 1;
 
         return this.redraw();
     }
