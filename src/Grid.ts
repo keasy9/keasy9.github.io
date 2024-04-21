@@ -1,13 +1,3 @@
-type Cell =  {
-    x: number,
-    y: number,
-    data?: any,
-}
-
-interface CellList<T> {
-    [key: string]: T;
-}
-
 export class Grid {
     private readonly canvas: HTMLCanvasElement;
     readonly ctx: CanvasRenderingContext2D;
@@ -70,26 +60,24 @@ export class Grid {
 }
 
 class CellSingleton {
-    private cells: CellList<Cell> = {};
-    private data: Cell;
+    private x: number = 0;
+    private y: number = 0;
 
-    constructor(private grid: Grid) {
-        this.data = this.cells['0_0'];
-    }
+    constructor(private grid: Grid) {};
 
     public get(x: number, y: number): this {
-        const cellKey = `${x.toString()}_${y.toString()}`;
-        this.cells[cellKey] ??= {x: x, y: y};
-        this.data = this.cells[cellKey];
+        this.x = x;
+        this.y = y;
+
         return this;
     }
 
     private getX(x?: number): number {
-        return (x ?? this.data.x) * this.grid.getScale();
+        return (x ?? this.x) * this.grid.getScale();
     }
 
     private getY(y?: number): number {
-        return (y ?? this.data.y) * this.grid.getScale();
+        return (y ?? this.y) * this.grid.getScale();
     }
 
     public paint(color: string | number, g?: number, b?: number, a?: number): this {
