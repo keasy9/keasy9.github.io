@@ -1,5 +1,6 @@
 import {Game} from "./Game.ts";
 import {Direction, Point} from "./types.tp.ts";
+import {Input} from "./Input.ts";
 
 export class Snake extends Game {
     private direction: Direction = Direction.Up;
@@ -8,66 +9,63 @@ export class Snake extends Game {
     private apple?: Point;
     private gridSize: Point = {x: 0, y: 0};
 
-    private touchStart?: Point;
-
     constructor(canvas: HTMLCanvasElement) {
         super(canvas);
 
-        window.addEventListener('keydown', (event) => {
-            if (event.repeat) return;
-
-            if (this.continue) {
-                if (this.direction !== Direction.Down && (event.code === 'ArrowUp' || event.code === 'KeyW')) {
-                    this.nextDirection = Direction.Up;
-                } else if (this.direction !== Direction.Up && (event.code === 'ArrowDown' || event.code === 'KeyS')) {
-                    this.nextDirection = Direction.Down;
-                } else if (this.direction !== Direction.Right && (event.code === 'ArrowLeft' || event.code === 'KeyA')) {
-                    this.nextDirection = Direction.Left;
-                } else if (this.direction !== Direction.Left && (event.code === 'ArrowRight' || event.code === 'KeyD')) {
-                    this.nextDirection = Direction.Right;
-                }
-            }
-
-            if (event.code === 'Space') {
-                this.togglePause();
+        this.input.listen(Input.keyboard.up, () => {
+            if (this.continue && this.direction !== Direction.Down) {
+                this.nextDirection = Direction.Up;
             }
         });
 
-        window.addEventListener('click', () => {
+        this.input.listen(Input.keyboard.down, () => {
+            if (this.continue && this.direction !== Direction.Up) {
+                this.nextDirection = Direction.Down;
+            }
+        });
+
+        this.input.listen(Input.keyboard.left, () => {
+            if (this.continue && this.direction !== Direction.Right) {
+                this.nextDirection = Direction.Left;
+            }
+        });
+
+        this.input.listen(Input.keyboard.right, () => {
+            if (this.continue && this.direction !== Direction.Left) {
+                this.nextDirection = Direction.Right;
+            }
+        });
+
+        this.input.listen(Input.keyboard.space, () => {
             this.togglePause();
         });
 
-        document.addEventListener('touchstart', (event) => {
-            this.touchStart = {
-                x: event.touches[0].clientX,
-                y: event.touches[0].clientY,
-            };
+        this.input.listen(Input.mouse.click, () => {
+            this.togglePause();
         });
 
-        document.addEventListener('touchmove', (event) => {
-            if (!this.touchStart) return;
-
-            const touch: Touch = event.touches[0];
-
-            const xDiff = this.touchStart.x - touch.clientX;
-            const yDiff = this.touchStart.y - touch.clientY;
-
-
-            if (Math.abs(xDiff) > Math.abs(yDiff)) {
-                if (xDiff > 0 && this.direction !== Direction.Right) {
-                    this.nextDirection = Direction.Left;
-                } else if (this.direction !== Direction.Left) {
-                    this.nextDirection = Direction.Right;
-                }
-            } else {
-                if (yDiff > 0 && this.direction !== Direction.Down) {
-                    this.nextDirection = Direction.Up;
-                } else if (this.direction !== Direction.Up) {
-                    this.nextDirection = Direction.Down;
-                }
+        this.input.listen(Input.touchScreen.swipeUp, () => {
+            if (this.continue && this.direction !== Direction.Down) {
+                this.nextDirection = Direction.Up;
             }
+        });
 
-            this.touchStart = undefined;
+        this.input.listen(Input.touchScreen.swipeDown, () => {
+            if (this.continue && this.direction !== Direction.Up) {
+                this.nextDirection = Direction.Down;
+            }
+        });
+
+        this.input.listen(Input.touchScreen.swipeLeft, () => {
+            if (this.continue && this.direction !== Direction.Right) {
+                this.nextDirection = Direction.Left;
+            }
+        });
+
+        this.input.listen(Input.touchScreen.swipeRight, () => {
+            if (this.continue && this.direction !== Direction.Left) {
+                this.nextDirection = Direction.Right;
+            }
         });
     }
 
