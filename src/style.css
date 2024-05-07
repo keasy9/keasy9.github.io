@@ -1,13 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* {
+    font-family: "Press Start 2P", system-ui;
+    font-weight: 400;
+    font-style: normal;
+    color: whitesmoke;
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
     background: black;
+
+    canvas {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        margin: auto;
+    }
+
+    a {
+        text-decoration: none;
+
+        &:hover {
+            color: dodgerblue;
+        }
+    }
+
+    .ui-top, .ui-full {
+        z-index: 999;
+        position: absolute;
+        left: 0;
+        width: 100%;
+        padding: 1rem 2rem;
+        font-size: 2rem;
+    }
+
+    .ui-top {
+        top: 0;
+
+        .info {
+            font-size: 14px;
+        }
+    }
+
+    .ui-full {
+        top: 0;
+        height: 100%;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: rgba(0,0,0, .3);
+
+        button {
+            background: none;
+            border: none;
+
+            &:hover {
+                color: dodgerblue;
+            }
+        }
+    }
 }
 
-canvas {
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    margin: auto;
+.hidden {
+    display: none !important;
 }

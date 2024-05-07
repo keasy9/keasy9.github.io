@@ -44,7 +44,7 @@ export class HeartBeatAnimation extends Game {
         if (this.continue) {
             this.step();
             setTimeout(() => {
-                this.step(false)
+                if (this.continue) this.step(false)
             }, 700 / this.speed);
 
             setTimeout(() => this.go(), 2000 / this.speed);
@@ -77,6 +77,10 @@ export class HeartBeatAnimation extends Game {
 
     public setSpeed(speed: number): this {
         this.speed = speed;
+        return this;
+    }
+
+    public togglePause(): this {
         return this;
     }
 

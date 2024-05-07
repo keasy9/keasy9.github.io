@@ -9,6 +9,7 @@ export class Input {
         left: (event: Event) => event instanceof KeyboardEvent && (['ArrowLeft', 'KeyA', 'Numpad4'].indexOf(event.code) !== -1),
         right: (event: Event) => event instanceof KeyboardEvent && (['ArrowRight', 'KeyD', 'Numpad6'].indexOf(event.code) !== -1),
         space: (event: Event) => event instanceof KeyboardEvent && (['Space', 'Numpad5'].indexOf(event.code) !== -1),
+        escape: (event: Event) => event instanceof KeyboardEvent && event.code === 'Escape',
     }
     public static mouse = {
         click: (event: Event) => event instanceof MouseEvent,
@@ -114,5 +115,10 @@ export class Input {
         this.bindings.get(event)!.delete(uuid);
 
         return func;
+    }
+
+    public deaf(): this {
+        this.bindings = new Map();
+        return this;
     }
 }

@@ -8,6 +8,7 @@ export class Snake extends Game {
     private body: Point[] = []
     private apple?: Point;
     private gridSize: Point = {x: 0, y: 0};
+    private score: number = 0;
 
     constructor(canvas: HTMLCanvasElement) {
         super(canvas);
@@ -40,6 +41,10 @@ export class Snake extends Game {
             this.togglePause();
         });
 
+        this.input.listen(Input.keyboard.escape, () => {
+            this.togglePause();
+        });
+
         this.input.listen(Input.mouse.click, () => {
             this.togglePause();
         });
@@ -67,16 +72,23 @@ export class Snake extends Game {
                 this.nextDirection = Direction.Right;
             }
         });
+
+        this.ui.menu('main').addButton('exit', () => document.location.hash = 'home');
     }
 
-    private togglePause() {
+    public togglePause(): this {
         this.continue = !this.continue;
         if (this.continue) {
+            this.ui.menu('main').hide();
             this.go();
+        } else {
+            this.ui.menu('main').show();
         }
+        return this;
     }
 
     public begin(): this {
+        this.ui.info.set(`<span>score: ${this.score}</span>`).show();
         this.grid.resize(20);
         this.gridSize = this.grid.getSize();
 
@@ -102,6 +114,9 @@ export class Snake extends Game {
 
     public end(): this {
         this.continue = false;
+        this.input.deaf();
+        this.ui.removeMenu('main');
+        this.ui.info.clear().hide();
         return this;
     }
 
@@ -139,6 +154,8 @@ export class Snake extends Game {
         if (this.apple && this.apple.x === newHead.x && this.apple.y === newHead.y) {
             this.grid.cell(this.apple.x, this.apple.y).paint('green');
             this.placeApple();
+            this.score++;
+            this.ui.info.set(`<span>score: ${this.score}</span>`);
         } else {
             const tail = this.body[this.body.length - 1];
             this.body.pop();
@@ -148,7 +165,6 @@ export class Snake extends Game {
         this.body.unshift(newHead);
 
         this.drawBody();
-
 
         this.direction = this.nextDirection;
     }
