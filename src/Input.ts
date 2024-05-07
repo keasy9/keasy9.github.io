@@ -78,6 +78,7 @@ export class Input {
     }
     private static touchStart: Point | null = null;
     private bindings: Map<Function, Map<string, Function>> = new Map();
+    private preventUnload: boolean = false;
 
     constructor() {
         window.addEventListener('keydown', e => this.handle(e));
@@ -89,6 +90,14 @@ export class Input {
             };
         });
         window.addEventListener('touchmove', e => this.handle(e), false);
+        window.addEventListener('beforeunload', e => this.handleUnload(e));
+
+    }
+
+    private handleUnload(event: BeforeUnloadEvent) {
+        if (this.preventUnload) {
+            event.preventDefault();
+        }
     }
 
     private handle(event: Event) {
@@ -100,6 +109,7 @@ export class Input {
     }
 
     public listen(event: Function, callback: Function): string  {
+        if (event === Input.touchScreen.swipeDown) this.preventUnload = true;
         if (!this.bindings.has(event)) this.bindings.set(event, new Map());
 
         const uuid = uuidv4();
@@ -109,7 +119,8 @@ export class Input {
     }
 
     public notListen(event: Function, uuid: string): Function | null {
-        if (this.bindings.has(event)) return null;
+        if (event === Input.touchScreen.swipeDown) this.preventUnload = false;
+        if (!this.bindings.has(event)) return null;
 
         const func = this.bindings.get(event)!.get(uuid) ?? null;
         this.bindings.get(event)!.delete(uuid);
