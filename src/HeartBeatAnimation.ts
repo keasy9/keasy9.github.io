@@ -1,4 +1,4 @@
-import {Game} from "./Game.ts";
+import {Game} from "./core/Game.ts";
 
 export class HeartBeatAnimation extends Game {
     private centerX: number = 0;

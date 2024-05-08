@@ -1,1 +1,1 @@
-declare module 'foo';
+declare module '*.mp3';

@@ -1,6 +1,8 @@
-import {Game} from "./Game.ts";
+import {Game} from "./core/Game.ts";
 import {Direction, Point} from "./types.tp.ts";
-import {Input} from "./Input.ts";
+import {Input} from "./core/Input.ts";
+
+import scoreUpSound from './assets/sounds/scoreUp.mp3';
 
 export class Snake extends Game {
     private direction: Direction = Direction.Up;
@@ -156,6 +158,7 @@ export class Snake extends Game {
             this.placeApple();
             this.score++;
             this.ui.info.set(`<span>score: ${this.score}</span>`);
+            this.sound.play(scoreUpSound);
         } else {
             const tail = this.body[this.body.length - 1];
             this.body.pop();
@@ -187,7 +190,6 @@ export class Snake extends Game {
                 return;
             }
         }
-
         this.grid.cell(this.apple.x, this.apple.y).paint('red');
     }
 
