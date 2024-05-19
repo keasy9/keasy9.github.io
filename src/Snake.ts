@@ -47,35 +47,11 @@ export class Snake extends Game {
             this.togglePause();
         });
 
-        this.input.listen(Input.mouse.click, () => {
-            this.togglePause();
-        });
+        this.ui.enableUiButtons();
 
-        this.input.listen(Input.touchScreen.swipeUp, () => {
-            if (this.continue && this.direction !== Direction.Down) {
-                this.nextDirection = Direction.Up;
-            }
-        });
-
-        this.input.listen(Input.touchScreen.swipeDown, () => {
-            if (this.continue && this.direction !== Direction.Up) {
-                this.nextDirection = Direction.Down;
-            }
-        });
-
-        this.input.listen(Input.touchScreen.swipeLeft, () => {
-            if (this.continue && this.direction !== Direction.Right) {
-                this.nextDirection = Direction.Left;
-            }
-        });
-
-        this.input.listen(Input.touchScreen.swipeRight, () => {
-            if (this.continue && this.direction !== Direction.Left) {
-                this.nextDirection = Direction.Right;
-            }
-        });
-
-        this.ui.menu('main').addButton('exit', () => document.location.hash = 'home');
+        this.ui.menu('main')
+            .addButton('continue', () => this.togglePause())
+            .addButton('exit', () => document.location.hash = 'home');
     }
 
     public togglePause(): this {
@@ -117,8 +93,10 @@ export class Snake extends Game {
     public end(): this {
         this.continue = false;
         this.input.deaf();
+        this.ui.menu('main').hide();
         this.ui.removeMenu('main');
         this.ui.info.clear().hide();
+        this.ui.disableUiButtons();
         return this;
     }
 

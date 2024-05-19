@@ -1,3 +1,4 @@
+
 export class Ui {
     public info: Info;
     private readonly ui: HTMLElement;
@@ -20,6 +21,52 @@ export class Ui {
         }
         return this;
     }
+
+    public enableUiButtons(buttonsForce: boolean = false): this {
+        if (window.TouchEvent || buttonsForce) {
+            const btns: HTMLElement | null = document.querySelector('.ui-buttons');
+            if (btns !== null) {
+                btns.classList.remove('hidden');
+
+                const buttons: NodeListOf<HTMLButtonElement> = btns.querySelectorAll('.buttons-container > div');
+                buttons.forEach(btn => {
+                    let code: string = 'ArrowUp';
+                    if (btn.classList.contains('button-down')) {
+                        code = 'ArrowDown';
+                    } else if (btn.classList.contains('button-left')) {
+                        code = 'ArrowLeft';
+                    } else if (btn.classList.contains('button-right')) {
+                        code = 'ArrowRight';
+                    }
+
+                    btn.onmousedown = () => window.dispatchEvent(new KeyboardEvent('keydown',  {'code': code}))
+                    btn.onmouseup = () => window.dispatchEvent(new KeyboardEvent('keyup',  {'code': code}))
+                });
+            }
+        }
+
+        const pauseBtn: HTMLElement | null = document.querySelector('.pause-button');
+        if (pauseBtn !== null) {
+            pauseBtn.classList.remove('hidden');
+            pauseBtn.onclick = () => window.dispatchEvent(new KeyboardEvent('keydown',  {'code': 'Escape'}));
+        }
+
+        return this;
+    }
+
+    public disableUiButtons(): this {
+        const btns: HTMLElement | null = document.querySelector('.ui-buttons');
+        if (btns !== null) {
+            btns.classList.add('hidden');
+        }
+
+        const pauseBtn: HTMLElement | null = document.querySelector('.pause-button');
+        if (pauseBtn !== null) {
+            pauseBtn.classList.add('hidden');
+        }
+
+        return this;
+    }
 }
 
 class Menu {
@@ -28,6 +75,7 @@ class Menu {
 
     constructor(private readonly ui: HTMLElement) {
         this.element = document.createElement('div');
+        this.element.classList.add('menu');
         this.element.classList.add('hidden');
         ui.appendChild(this.element);
     }

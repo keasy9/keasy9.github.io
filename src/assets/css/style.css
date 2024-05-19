@@ -29,9 +29,12 @@ body {
         }
     }
 
-    .ui-top, .ui-full {
+    .ui-top, .ui-full, .ui-buttons {
         z-index: 999;
         position: absolute;
+    }
+
+    .ui-top, .ui-full {
         left: 0;
         width: 100%;
         padding: 1rem 2rem;
@@ -39,10 +42,29 @@ body {
     }
 
     .ui-top {
+        padding-right: 0;
+        display: flex;
         top: 0;
 
         .info {
+            flex-grow: 1;
             font-size: 14px;
+        }
+
+        .pause-button {
+            z-index: 1000;
+            cursor: pointer;
+            position: relative;
+
+            img {
+                position: absolute;
+                left: -100px;
+                top: -1rem;
+                opacity: .3;
+                filter: invert(1);
+                height: 100px;
+                width: 100px;
+            }
         }
     }
 
@@ -56,11 +78,60 @@ body {
         background: rgba(0,0,0, .3);
 
         button {
+            display: block;
             background: none;
             border: none;
+            margin: 0 auto;
+            padding: 5px;
 
             &:hover {
                 color: dodgerblue;
+            }
+        }
+    }
+
+    .ui-buttons {
+        margin: auto;
+        left: 0;
+        right: 0;
+        bottom: 200px;
+        width: 0;
+        height: 0;
+
+        .buttons-container {
+            position: relative;
+
+            .button-up, .button-down, .button-left, .button-right {
+                position: absolute;
+                cursor: pointer;
+            }
+
+            .button-up {
+                rotate: -90deg;
+                top: -80px;
+                left: -46px;
+            }
+
+            .button-down {
+                rotate: 90deg;
+                top: 80px;
+                left: -46px;
+            }
+
+            .button-left {
+                rotate: 180deg;
+                left: -120px;
+            }
+
+            .button-right {
+                right: -126px;
+            }
+
+            img {
+                filter: invert(1);
+                opacity: .3;
+                height: 100px;
+                width: 100px;
             }
         }
     }
