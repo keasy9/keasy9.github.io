@@ -12,9 +12,18 @@ export class Snake extends Game {
     private gridSize: Point = {x: 0, y: 0};
     private score: number = 0;
 
-    constructor(canvas: HTMLCanvasElement) {
-        super(canvas);
+    public togglePause(): this {
+        this.continue = !this.continue;
+        if (this.continue) {
+            this.ui.menu('main').hide();
+            this.go();
+        } else {
+            this.ui.menu('main').show();
+        }
+        return this;
+    }
 
+    public begin(): this {
         this.input.listen(Input.keyboard.up, () => {
             if (this.continue && this.direction !== Direction.Down) {
                 this.nextDirection = Direction.Up;
@@ -50,22 +59,10 @@ export class Snake extends Game {
         this.ui.enableUiButtons();
 
         this.ui.menu('main')
+            .addButton('restart', () => this.end() && this.begin())
             .addButton('continue', () => this.togglePause())
             .addButton('exit', () => document.location.hash = 'home');
-    }
 
-    public togglePause(): this {
-        this.continue = !this.continue;
-        if (this.continue) {
-            this.ui.menu('main').hide();
-            this.go();
-        } else {
-            this.ui.menu('main').show();
-        }
-        return this;
-    }
-
-    public begin(): this {
         this.ui.info.set(`<span>score: ${this.score}</span>`).show();
         this.grid.resize(20);
         this.gridSize = this.grid.getSize();
