@@ -1,8 +1,7 @@
 
 export class Ui {
     public info: Info;
-    private readonly ui: HTMLElement;
-    private menus: Map<string, Menu> = new Map();
+    public readonly ui: HTMLElement;
 
     constructor() {
         this.ui = document.querySelector('.ui-full')!;
@@ -10,16 +9,7 @@ export class Ui {
     }
 
     public menu(name: string): Menu {
-        if (!this.menus.has(name)) this.menus.set(name, new Menu(this.ui));
-        return this.menus.get(name)!;
-    }
-
-    public removeMenu(name: string): this {
-        if (this.menus.has(name)) {
-            this.menus.get(name)!.remove();
-            this.menus.delete(name);
-        }
-        return this;
+        return Menu.getInstance(name, this);
     }
 
     public enableUiButtons(buttonsForce: boolean = false): this {
@@ -67,54 +57,114 @@ export class Ui {
 
         return this;
     }
+
+    public clear() {
+        Menu.removeAll();
+        this.disableUiButtons().info.clear();
+    }
 }
 
 class Menu {
-    private buttons: Map<string, Function> = new Map();
+    private static instances: Map<string, Menu> = new Map();
+    private elems: Array<string> = [];
     private readonly element: HTMLElement;
 
-    constructor(private readonly ui: HTMLElement) {
+    constructor(private name: string, ui: Ui) {
         this.element = document.createElement('div');
         this.element.classList.add('menu');
         this.element.classList.add('hidden');
-        ui.appendChild(this.element);
+        ui.ui.appendChild(this.element);
     }
 
-    addButton(name: string, onclick: (this: GlobalEventHandlers, ev: MouseEvent) => any): this {
-        this.buttons.set(name, onclick);
+    public static getInstance(instanceName: string, ui: Ui): Menu {
+        if (!this.instances.has(instanceName)) {
+            this.instances.set(instanceName, new Menu(instanceName, ui))
+        }
+        return this.instances.get(instanceName)!;
+    }
 
-        const btn = document.createElement('button');
-        btn.id = btn.innerText = name;
-        btn.onclick = onclick;
-        this.element.appendChild(btn);
+    public addButton(name: string, onclick: (this: GlobalEventHandlers, ev: MouseEvent) => any): this {
+        if (this.addElem(`${name}_btn`)) {
+            const btn = document.createElement('button');
+            btn.id = btn.innerText = name;
+            btn.onclick = onclick;
+            this.element.appendChild(btn);
+        }
 
         return this;
     }
 
-    removeButton(name: string): this {
-        if (this.buttons.has(name)) {
-            this.buttons.delete(name);
+    public removeButton(name: string): this {
+        if (this.removeElem(`${name}_btn`)) {
             this.element.querySelector(`button#${name}}`)!.remove();
         }
 
         return this;
     }
 
-    hide(): this {
+    public addSwitch(name: string, onchange: (enabled: boolean) => any, defaultValue: boolean = false): this {
+        if (this.addElem(`${name}_swh`)) {
+            const checked: string = defaultValue ? 'checked=checked' : '';
+            const swh = document.createElement('label');
+            swh.insertAdjacentHTML(
+                'beforeend',
+                `<input type="checkbox" ${checked}> ${name}`
+                );
+            swh.id = name;
+            swh.onchange = () => onchange((<HTMLInputElement>swh.firstElementChild!).checked);
+            this.element.appendChild(swh);
+        }
+
+        return this;
+    }
+
+    public removeSwitch(name: string): this {
+        if (this.removeElem(`${name}_swh`)) {
+            this.element.querySelector(`label#${name}}`)!.remove();
+        }
+
+        return this;
+    }
+
+    public hide(): this {
         this.element.classList.add('hidden');
-        this.ui.classList.add('hidden');
         return this;
     }
 
-    show(): this {
+    public show(): this {
+        Menu.instances.forEach(menu => menu.hide());
         this.element.classList.remove('hidden');
-        this.ui.classList.remove('hidden');
         return this;
     }
 
-    remove() {
+    public remove() {
         this.element.remove();
+        Menu.instances.delete(this.name);
     }
+
+    public static removeAll() {
+        Menu.instances.forEach(menu => menu.remove());
+    }
+
+    private addElem(name: string): boolean {
+        if (this.elems.indexOf(name) === -1) {
+            this.elems.push(name);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private removeElem(name: string): boolean {
+        const indexOf = this.elems.indexOf(name);
+        if (indexOf === -1) {
+            return false;
+        } else {
+            this.elems.splice(indexOf, 1);
+            return true;
+        }
+    }
+
 }
 
 class Info {

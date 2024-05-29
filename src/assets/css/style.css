@@ -70,23 +70,32 @@ body {
 
     .ui-full {
         top: 0;
-        height: 100%;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        background: rgba(0,0,0, .3);
+        height: 0;
 
-        button {
+        button, label {
             display: block;
             background: none;
             border: none;
             margin: 0 auto;
             padding: 5px;
+            font-size: 14px;
 
             &:hover {
                 color: dodgerblue;
             }
+        }
+
+        .menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: rgba(0,0,0, .3);
         }
     }
 

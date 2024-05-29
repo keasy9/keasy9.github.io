@@ -11,11 +11,15 @@ export class Snake extends Game {
     private apple?: Point;
     private gridSize: Point = {x: 0, y: 0};
     private score: number = 0;
+    private edgeDeath: boolean = false;
+    private loopDeath: boolean = false;
+    private prevMenu: string = 'main';
 
     public togglePause(): this {
         this.continue = !this.continue;
         if (this.continue) {
             this.ui.menu('main').hide();
+            this.ui.menu('rules').hide();
             this.go();
         } else {
             this.ui.menu('main').show();
@@ -48,18 +52,23 @@ export class Snake extends Game {
             }
         });
 
-        this.input.listen(Input.keyboard.space, () => {
-            this.togglePause();
-        });
-
         this.input.listen(Input.keyboard.escape, () => {
             this.togglePause();
         });
 
         this.ui.enableUiButtons();
 
+        this.ui.menu('rules')
+            .addSwitch('edge-death', (val: boolean) => this.edgeDeath = val)
+            .addSwitch('loop-death', (val: boolean) => this.loopDeath = val)
+            .addButton('back', () => this.ui.menu(this.prevMenu).show());
+
         this.ui.menu('main')
             .addButton('restart', () => this.end() && this.begin())
+            .addButton('game rules', () => {
+                this.prevMenu = 'main';
+                this.ui.menu('rules').show();
+            })
             .addButton('continue', () => this.togglePause())
             .addButton('exit', () => document.location.hash = 'home');
 
@@ -87,13 +96,27 @@ export class Snake extends Game {
         return this;
     }
 
-    public end(): this {
+    public end(gameover: boolean = false): this {
         this.continue = false;
         this.input.deaf();
-        this.ui.menu('main').hide();
-        this.ui.removeMenu('main');
-        this.ui.info.clear().hide();
-        this.ui.disableUiButtons();
+
+        if (gameover) {
+            this.ui.menu('gameover')
+                .addButton(`score: ${this.score}`, () => {})
+                .addButton('', () => {})
+                .addButton('restart', () => this.begin())
+                .addButton('game rules', () => {
+                    this.prevMenu = 'gameover';
+                    this.ui.menu('rules').show();
+                })
+                .addButton('exit', () => document.location.hash = 'home')
+                .show();
+            this.ui.disableUiButtons();
+            this.ui.info.clear();
+        } else {
+            this.ui.clear();
+        }
+
         return this;
     }
 
@@ -119,13 +142,37 @@ export class Snake extends Game {
         }
 
         if (newHead.x < 0) {
-            newHead.x = this.gridSize.x;
+            if (this.edgeDeath) {
+                this.end(true);
+            } else {
+                newHead.x = this.gridSize.x;
+            }
         } else if (newHead.x > this.gridSize.x) {
-            newHead.x = 0;
+            if (this.edgeDeath) {
+                this.end(true);
+            } else {
+                newHead.x = 0;
+            }
         } else if (newHead.y < 0) {
-            newHead.y = this.gridSize.y;
+            if (this.edgeDeath) {
+                this.end(true);
+            } else {
+                newHead.y = this.gridSize.y;
+            }
         } else if (newHead.y > this.gridSize.y) {
-            newHead.y = 0;
+            if (this.edgeDeath) {
+                this.end(true);
+            } else {
+                newHead.y = 0;
+            }
+        }
+
+        if (this.loopDeath) {
+            this.body.forEach((point: Point) => {
+                if (point.x === newHead.x && point.y === newHead.y) {
+                    this.end(true);
+                }
+            })
         }
 
         if (this.apple && this.apple.x === newHead.x && this.apple.y === newHead.y) {
