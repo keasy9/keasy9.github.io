@@ -1,90 +1,145 @@
 import {Game} from "./core/Game.ts";
-import {Direction, Point} from "./types.tp.ts";
-import {Input} from "./core/Input.ts";
+import {Input, InputEvent} from "./core/Input.ts";
+import {Screen} from "./core/Screen.ts";
+import {Vector2d} from "./core/utils.ts";
+import {Ui} from "./core/Ui.ts";
+import {Sound} from "./core/Sound.ts";
 
-import scoreUpSound from './assets/sounds/scoreUp.mp3';
+// TODO: отображение текущего рекорда
 
 export class Snake extends Game {
-    private direction: Direction = Direction.Up;
-    private nextDirection: Direction = Direction.Up;
-    private body: Point[] = []
-    private apple?: Point;
-    private gridSize: Point = {x: 0, y: 0};
-    private score: number = 0;
-    private edgeDeath: boolean = false;
-    private loopDeath: boolean = false;
-    private prevMenu: string = 'main';
+    private static direction: string = 'up';
+    private static nextDirection: string = 'up';
+    private static body: Vector2d[] = []
+    private static apple?: Vector2d;
+    private static score: number = 0;
+    private static edgeDeath: boolean = false;
+    private static loopDeath: boolean = false;
+    private static prevMenu?: string | null;
+    private static readonly directions: {[index: string]: {vector: Vector2d, opposite: string}} = {
+        up: {
+            vector: new Vector2d(0, -1),
+            opposite: 'down',
+        },
+        right: {
+            vector: new Vector2d(1, 0),
+            opposite: 'left',
+        },
+        down: {
+            vector: new Vector2d(0, 1),
+            opposite: 'up',
+        },
+        left: {
+            vector: new Vector2d(-1, 0),
+            opposite: 'right',
+        },
+    };
 
-    public togglePause(): this {
-        this.continue = !this.continue;
-        if (this.continue) {
-            this.ui.menu('main').hide();
-            this.ui.menu('rules').hide();
-            this.go();
-        } else {
-            this.ui.menu('main').show();
+    public static resize() {
+        if (this.resizeTimer) {
+            clearTimeout(this.resizeTimer);
         }
+
+        this.resizeTimer = setTimeout(() => { this._resize() }, 100);
         return this;
     }
 
-    public begin(): this {
-        this.input.listen(Input.keyboard.up, () => {
-            if (this.continue && this.direction !== Direction.Down) {
-                this.nextDirection = Direction.Up;
+    protected static _resize() {
+        const oldSize = Screen.size;
+
+        Screen.autoFit(4000, 5000).autoScale().fill();
+
+        if (this.apple) {
+            this.placeApple(this.apple.multiply(Screen.size).divide(oldSize).round().maxLimit(Screen.size));
+        }
+
+        if (this.body.length > 1) {
+            const head = this.body.shift();
+
+            let newBody: Vector2d[] = [
+                head!.clone().multiply(Screen.size).divide(oldSize).round().maxLimit(Screen.size)
+            ];
+
+            this.body.forEach((point) => {
+                newBody.push(newBody[0].clone().substract(head!.clone().substract(point)));
+            });
+
+            this.body = newBody;
+
+            this.drawBody();
+        }
+
+    }
+
+    public static begin() {
+        Screen.fill();
+        for (const [dirName, dir] of Object.entries(this.directions)) {
+            Input.listen((<InputEvent>Input.keyboard[dirName]), () => {
+                if (this.continue && this.direction !== dir.opposite) {
+                    this.nextDirection = dirName;
+                }
+            });
+        }
+
+        Ui.touchScreen.button('pause', 'pauseButton.png').event = Input.keyboard.key('escape');
+        Ui.touchScreen.button('pause', 'pauseButton.png').scale = 2;
+
+        Input.listen(Input.keyboard.key('escape'), () => {
+            if (this.prevMenu) {
+                Ui.menu(this.prevMenu).open();
+                this.prevMenu = null;
+            } else {
+                Ui.menu('main').toggle();
+                this.togglePause();
             }
         });
 
-        this.input.listen(Input.keyboard.down, () => {
-            if (this.continue && this.direction !== Direction.Up) {
-                this.nextDirection = Direction.Down;
-            }
-        });
+        if (window.TouchEvent) {
+            Ui.touchScreen.dPad.link().link(true).scale = 2;
+        }
 
-        this.input.listen(Input.keyboard.left, () => {
-            if (this.continue && this.direction !== Direction.Right) {
-                this.nextDirection = Direction.Left;
+        Ui.menu('rules').switch('edge-death').onchange = (val: boolean) => this.edgeDeath = val;
+        Ui.menu('rules').switch('edge-death').text = 'death from edge';
+        Ui.menu('rules').switch('loop-death').onchange = (val: boolean) => this.loopDeath = val;
+        Ui.menu('rules').switch('loop-death').text = 'death from loop';
+        Ui.menu('rules').button('back').onclick = () => {
+            if (this.prevMenu) {
+                Ui.menu(this.prevMenu).open();
+                this.prevMenu = null;
+            } else {
+                Ui.menu('rules').close();
+                this.togglePause();
             }
-        });
+        }
+        Ui.menu('rules').button('back').text = 'back';
 
-        this.input.listen(Input.keyboard.right, () => {
-            if (this.continue && this.direction !== Direction.Left) {
-                this.nextDirection = Direction.Right;
-            }
-        });
-
-        this.input.listen(Input.keyboard.escape, () => {
+        Ui.menu('main').button('continue').onclick = () => {
+            this.prevMenu = null;
             this.togglePause();
-        });
+            Ui.menu('main').toggle();
+        };
+        Ui.menu('main').button('continue').text = 'continue';
+        Ui.menu('main').button('restart').onclick = () => this.end() && this.begin();
+        Ui.menu('main').button('restart').text = 'restart';
+        Ui.menu('main').button('game-rules').onclick = () => {
+            this.prevMenu = 'main';
+            Ui.menu('rules').open();
+        };
+        Ui.menu('main').button('game-rules').text = 'game rules'
+        Ui.menu('main').button('exit').onclick = () => document.location.hash = 'home';
+        Ui.menu('main').button('exit').text = 'exit';
 
-        this.ui.enableUiButtons();
+        this._resize();
 
-        this.ui.menu('rules')
-            .addSwitch('edge-death', (val: boolean) => this.edgeDeath = val)
-            .addSwitch('loop-death', (val: boolean) => this.loopDeath = val)
-            .addButton('back', () => this.ui.menu(this.prevMenu).show());
-
-        this.ui.menu('main')
-            .addButton('restart', () => this.end() && this.begin())
-            .addButton('game rules', () => {
-                this.prevMenu = 'main';
-                this.ui.menu('rules').show();
-            })
-            .addButton('continue', () => this.togglePause())
-            .addButton('exit', () => document.location.hash = 'home');
-
-        this.ui.info.set(`<span>score: ${this.score}</span>`).show();
-        this.grid.resize(20);
-        this.gridSize = this.grid.getSize();
-
-        const centerX: number = Math.round(this.gridSize.x/2);
-        const centerY: number = Math.round(this.gridSize.y/2);
+        const centerX: number = Math.round(Screen.width/2);
+        const centerY: number = Math.round(Screen.height/2);
 
         this.body = [
-            {x: centerX, y: centerY - 2},
-            {x: centerX, y: centerY - 1},
-            {x: centerX, y: centerY},
-            {x: centerX, y: centerY + 1},
-            {x: centerX, y: centerY + 2},
+            new Vector2d(centerX, centerY - 2),
+            new Vector2d(centerX, centerY - 1),
+            new Vector2d(centerX, centerY),
+            new Vector2d(centerX, centerY + 1),
+            new Vector2d(centerX, centerY + 2),
         ];
 
         this.drawBody();
@@ -96,58 +151,65 @@ export class Snake extends Game {
         return this;
     }
 
-    public end(gameover: boolean = false): this {
+    public static end(gameover: boolean = false) {
         this.continue = false;
-        this.input.deaf();
+        delete this.apple;
+        this.body = [];
+        Input.deaf();
 
         if (gameover) {
-            this.ui.menu('gameover')
-                .addButton(`score: ${this.score}`, () => {})
-                .addButton('', () => {})
-                .addButton('restart', () => this.begin())
-                .addButton('game rules', () => {
-                    this.prevMenu = 'gameover';
-                    this.ui.menu('rules').show();
-                })
-                .addButton('exit', () => document.location.hash = 'home')
-                .show();
-            this.ui.disableUiButtons();
-            this.ui.info.clear();
+            Ui.menu('gameover').label('score').text = `score: ${this.score}`;
+            Ui.menu('gameover').line('score');
+            Ui.menu('gameover').button('restart').onclick = () => this.begin();
+            Ui.menu('gameover').button('restart').text = 'restart';
+            Ui.menu('gameover').button('game-rules').onclick = () => {
+                this.prevMenu = 'gameover';
+                Ui.menu('rules').open();
+            };
+            Ui.menu('gameover').button('game-rules').text = 'game-rules';
+            Ui.menu('gameover').button('exit').onclick = () => document.location.hash = 'home';
+            Ui.menu('gameover').button('exit').text = 'exit';
+            Ui.menu('gameover').open();
+
+            Ui.touchScreen.dPad.remove();
         } else {
-            this.ui.clear();
+            Ui.menu('main').remove();
+            Ui.menu('game-rules').remove();
         }
 
         return this;
     }
 
-    private go(): void {
+    private static go(): void {
         if (this.continue) {
             this.move();
             setTimeout(() => this.go(), 300);
         }
     }
 
-    private move(): void {
+    private static move(): void {
         const head = this.body[0];
-        const newHead: Point = {...head};
+        const newHead: Vector2d = head.clone();
 
-        if (this.nextDirection === Direction.Up) {
-            newHead.y--;
-        } else if (this.nextDirection === Direction.Down) {
-            newHead.y++;
-        } else if (this.nextDirection === Direction.Left) {
-            newHead.x--;
-        } else if (this.nextDirection === Direction.Right) {
-            newHead.x++;
+        newHead.add(this.directions[this.nextDirection].vector);
+
+        if (this.apple && this.apple.x === newHead.x && this.apple.y === newHead.y) {
+            Sound.play(`scoreUp1`);
+            this.placeApple();
+            this.score++;
+        } else {
+            const tail = this.body[this.body.length - 1];
+            this.body.pop();
+            Screen.pixel(tail).clear();
         }
 
         if (newHead.x < 0) {
             if (this.edgeDeath) {
                 this.end(true);
             } else {
-                newHead.x = this.gridSize.x;
+                newHead.x = Screen.width;
             }
-        } else if (newHead.x > this.gridSize.x) {
+        } else if (newHead.x > Screen.width) {
             if (this.edgeDeath) {
                 this.end(true);
             } else {
@@ -157,9 +219,9 @@ export class Snake extends Game {
             if (this.edgeDeath) {
                 this.end(true);
             } else {
-                newHead.y = this.gridSize.y;
+                newHead.y = Screen.height;
             }
-        } else if (newHead.y > this.gridSize.y) {
+        } else if (newHead.y > Screen.height) {
             if (this.edgeDeath) {
                 this.end(true);
             } else {
@@ -168,23 +230,11 @@ export class Snake extends Game {
         }
 
         if (this.loopDeath) {
-            this.body.forEach((point: Point) => {
+            this.body.forEach((point: Vector2d) => {
                 if (point.x === newHead.x && point.y === newHead.y) {
                     this.end(true);
                 }
             })
-        }
-
-        if (this.apple && this.apple.x === newHead.x && this.apple.y === newHead.y) {
-            this.grid.cell(this.apple.x, this.apple.y).paint('green');
-            this.placeApple();
-            this.score++;
-            this.ui.info.set(`<span>score: ${this.score}</span>`);
-            this.sound.play(scoreUpSound);
-        } else {
-            const tail = this.body[this.body.length - 1];
-            this.body.pop();
-            this.grid.cell(tail.x, tail.y).clear();
         }
 
         this.body.unshift(newHead);
@@ -194,25 +244,39 @@ export class Snake extends Game {
         this.direction = this.nextDirection;
     }
 
-    private drawBody() {
-        this.body.forEach((point: Point) => {
-            this.grid.cell(point.x, point.y).paint('green');
+    private static drawBody(): void {
+        this.body.forEach((point: Vector2d) => {
+            Screen.pixel(point).paint('#1e90ff');
         });
     }
 
-    private placeApple() {
-        this.apple = {
-            x: Math.floor(Math.random() * this.gridSize.x),
-            y: Math.floor(Math.random() * this.gridSize.y)
-        };
+    private static placeApple(position?: Vector2d): void {
+        if (position) {
+            Screen.pixel(this.apple!).clear();
+            this.apple = position;
+        } else {
+            this.apple = new Vector2d(
+                Math.floor(Math.random() * Screen.width),
+                Math.floor(Math.random() * Screen.height)
+            );
 
-        for (const point of this.body) {
-            if (point.x === this.apple.x && point.y === this.apple.y) {
-                this.placeApple();
-                return;
+            for (const point of this.body) {
+                if (point.x === this.apple.x && point.y === this.apple.y) {
+                    this.placeApple();
+                    return;
+                }
             }
         }
-        this.grid.cell(this.apple.x, this.apple.y).paint('red');
+
+        Screen.pixel(this.apple).paint('#ff4500');
     }
 
+    public static togglePause() {
+        super.togglePause();
+        if (this.continue) {
+            this.go();
+        }
+
+        return this;
+    }
 }

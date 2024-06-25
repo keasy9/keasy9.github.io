@@ -1,7 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@font-face {
+    font-family: HYPER;
+    src: url(/src/assets/fonts/hyper.ttf);
+}
 
 * {
-    font-family: "Press Start 2P", system-ui;
+    font-family: "HYPER", system-ui;
     font-weight: 400;
     font-style: normal;
     color: whitesmoke;
@@ -9,16 +12,21 @@
 }
 
 body {
+    overflow: hidden;
     margin: 0;
     background: black;
 
     canvas {
+        width: 100vw;
+        height: 100vh;
         position: fixed;
         left: 0;
         right: 0;
         top: 0;
         bottom: 0;
         margin: auto;
+        scale: var(--scale);
+        image-rendering: pixelated;
     }
 
     a {
@@ -29,60 +37,22 @@ body {
         }
     }
 
-    .ui-top, .ui-full, .ui-buttons {
+    .ui-full {
         z-index: 999;
-        position: absolute;
-    }
-
-    .ui-top, .ui-full {
         left: 0;
         width: 100%;
         padding: 1rem 2rem;
-        font-size: 2rem;
-    }
-
-    .ui-top {
-        padding-right: 0;
-        display: flex;
-        top: 0;
-
-        .info {
-            flex-grow: 1;
-            font-size: 14px;
-        }
-
-        .pause-button {
-            z-index: 1000;
-            cursor: pointer;
-            position: relative;
-
-            img {
-                position: absolute;
-                left: -100px;
-                top: -1rem;
-                opacity: .3;
-                filter: invert(1);
-                height: 100px;
-                width: 100px;
-            }
-        }
-    }
-
-    .ui-full {
         top: 0;
         height: 0;
 
-        button, label {
-            display: block;
-            background: none;
-            border: none;
-            margin: 0 auto;
-            padding: 5px;
-            font-size: 14px;
-
-            &:hover {
-                color: dodgerblue;
-            }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0, .3);
+            z-index: 1000;
         }
 
         .menu {
@@ -91,56 +61,263 @@ body {
             left: 0;
             width: 100vw;
             height: 100vh;
+            z-index: 1001;
             text-align: center;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-            background: rgba(0,0,0, .3);
+            flex-direction: row;
+            align-items: center;
+
+            .container {
+                max-width: 700px;
+                width: 100%;
+                margin: 0 auto;
+                border: 3px double dodgerblue;
+                border-radius: 1px;
+
+                > * {
+
+                    &:focus {
+                        outline: none;
+                    }
+
+                    &:not(.line) {
+                        font-size: .9rem;
+                        width: 100%;
+                        padding: 10px 0;
+                        display: block;
+
+                        &:not(.label) {
+                            user-select: none;
+                            cursor: pointer;
+
+                            @media (hover: hover) and (pointer: fine) {
+                                &:focus {
+                                    background-color: dodgerblue;
+                                }
+                            }
+
+                            @media (hover: none) {
+                                &:active {
+                                    background-color: dodgerblue;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                .label, .switch, .slider, .selection {
+                    height: 47px;
+                    overflow: hidden;
+                }
+
+                .switch, .slider, .selection {
+                    display: grid;
+                    grid-template-columns: 40% 40%;
+                    column-gap: 10px;
+                    justify-content: center;
+                }
+
+
+                .line {
+                    border-bottom: 3px double dodgerblue;
+                    width: 100%;
+                    display: block;
+                }
+
+
+                .button, .label {
+                    background: none;
+                    border: none;
+                    margin: 0 auto;
+                }
+
+                .switch > input[type="checkbox"] + span + span:after {
+                    color: white;
+                    content: 'off';
+                    display: inline-block;
+                }
+
+                .switch > input[type="checkbox"]:checked + span + span:after {
+                    content: 'on';
+                    color: orangered;
+                }
+
+                .slider {
+                    > span:first-child:after {
+                        content: ':';
+                    }
+
+                    > div {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+
+                        > span {
+                            min-width: 30px;
+                            color: orangered;
+                        }
+
+                        > div  {
+                            display: flex;
+                            align-items: center;
+
+                            > span {
+                                height: 15px;
+                                width: 5px;
+                                display: block;
+                                background-color: white;
+
+                                &:not(:first-child) {
+                                    margin-left: 5px;
+                                }
+
+                                &.enabled {
+                                    background-color: orangered;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                .selection {
+                    > span:first-child:after {
+                        content: ':';
+                    }
+
+                    > div {
+                        display: flex;
+
+                        > span {
+                            min-width: 30px;
+                            color: orangered;
+                        }
+
+                        > div {
+                            flex-grow: 1;
+                            display: inline-block;
+
+                            > span {
+                                display: none;
+
+                                &.enabled {
+                                    display: inline-block;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-    }
 
-    .ui-buttons {
-        margin: auto;
-        left: 0;
-        right: 0;
-        bottom: 200px;
-        width: 0;
-        height: 0;
+        & > button, & > .d-pad {
+            --scale: 1;
+            position: absolute;
+            display: inline-block;
 
-        .buttons-container {
-            position: relative;
-
-            .button-up, .button-down, .button-left, .button-right {
-                position: absolute;
-                cursor: pointer;
+            &.top-right {
+                right: calc(20px * var(--scale) + 20px);
+                top: 20px;
             }
 
-            .button-up {
-                rotate: -90deg;
-                top: -80px;
-                left: -46px;
+            &.top-left {
+                top: 20px;
+                left: calc(20px * var(--scale) + 20px);
             }
 
-            .button-down {
-                rotate: 90deg;
-                top: 80px;
-                left: -46px;
+            &.top-center {
+                margin: 0 auto;
+                left: 0;
+                right: 0;
+                top: 20px;
             }
 
-            .button-left {
-                rotate: 180deg;
-                left: -120px;
+            &.bottom-right {
+                right: calc(20px * var(--scale) + 20px);
+                bottom: 20px;
             }
 
-            .button-right {
-                right: -126px;
+            &.bottom-left {
+                bottom: 20px;
+                left: calc(20px * var(--scale) + 20px);
             }
+
+            &.bottom-center {
+                margin: 0 auto;
+                left: 0;
+                right: 0;
+                bottom: 20px;
+            }
+        }
+
+        & > button {
+            padding: 0;
+            border: none;
+            background-color: transparent;
+            width: calc(40px * var(--scale));
+            height: calc(40px * var(--scale));
+            background-size: cover;
+            image-rendering: pixelated;
+            cursor: pointer;
 
             img {
-                filter: invert(1);
-                opacity: .3;
-                height: 100px;
-                width: 100px;
+                object-fit: cover;
+                object-position: top;
+                width: calc(40px * var(--scale));
+                height: calc(40px * var(--scale));
+            }
+
+            &:active img, &.active img {
+                object-position: bottom;
+            }
+        }
+
+        & > .d-pad {
+            width: calc(100px * var(--scale));
+            height: calc(100px * var(--scale));
+
+            button {
+                padding: 0;
+                background-color: transparent;
+                border: none;
+                width: calc(40px * var(--scale));
+                height: calc(40px * var(--scale));
+                position: absolute;
+                margin: auto;
+                top: 0;
+                left: 0;
+                right: 0;
+
+                img {
+                    image-rendering: pixelated;
+                    width: calc(40px * var(--scale));
+                    height: calc(40px * var(--scale));
+                    object-position: top;
+                    object-fit: cover;
+                }
+
+                &.active img {
+                    object-position: bottom;
+                }
+
+                &:nth-child(2) {
+                    rotate: -90deg;
+                    margin: auto 0;
+                    bottom: 0;
+                }
+
+                &:nth-child(3) {
+                    rotate: 90deg;
+                    margin: auto 0;
+                    bottom: 0;
+                    left: unset;
+                }
+
+                &:last-child {
+                    rotate: 180deg;
+                    margin: 0 auto;
+                    bottom: 0;
+                    top: unset;
+                }
             }
         }
     }

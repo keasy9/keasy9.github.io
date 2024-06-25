@@ -1,24 +1,35 @@
-import {Grid} from "./Grid.ts";
-import {Input} from "./Input.ts";
-import {Ui} from "./Ui.ts";
-import {Sound} from "./Sound.ts";
+import {Screen} from "./Screen.ts";
+import {Vector2d} from "./utils.ts";
 
 export abstract class Game {
-    protected grid: Grid;
-    protected input: Input;
-    protected ui: Ui;
-    protected sound: Sound;
-    protected continue: boolean = false;
-    protected speed: number = 1;
+    protected static continue: boolean = false;
+    protected static speed: number = 1;
+    protected static resizeTimer?: number;
 
-    constructor(canvas: HTMLCanvasElement) {
-        this.grid = new Grid(canvas).resize();
-        this.input = new Input();
-        this.ui = new Ui();
-        this.sound = new Sound();
+    public static resize() {
+        if (this.resizeTimer) {
+            clearTimeout(this.resizeTimer);
+        }
+
+        this.resizeTimer = setTimeout(() => { this._resize() }, 100);
+        return this;
     }
 
-    public abstract begin(): this;
-    public abstract togglePause(): this;
-    public abstract end(): this;
+    protected static _resize() {}
+
+    public static begin() {
+        Screen.size = new Vector2d(100, 100);
+        this.continue = true;
+        return this;
+    }
+
+    public static togglePause() {
+        this.continue = !this.continue;
+        return this;
+    }
+
+    public static end() {
+        this.continue = !this.continue;
+        return this;
+    }
 }

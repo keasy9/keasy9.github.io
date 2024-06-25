@@ -1,17 +1,20 @@
-import {Point} from "../types.tp.ts";
 import {v4 as uuidv4} from 'uuid';
+import {Vector2d} from "./utils.ts";
+
+export type InputEvent = (event: Event) => boolean
 
 export class Input {
-    public static keyboard = {
+    public static keyboard: {[index: string]: Function, key: Function} = {
         any: (event: Event) => event instanceof KeyboardEvent,
-        up: (event: Event) => event instanceof KeyboardEvent && (['ArrowUp', 'KeyW', 'Numpad8'].indexOf(event.code) !== -1),
-        down: (event: Event) => event instanceof KeyboardEvent && (['ArrowDown', 'KeyD', 'Numpad2'].indexOf(event.code) !== -1),
-        left: (event: Event) => event instanceof KeyboardEvent && (['ArrowLeft', 'KeyA', 'Numpad4'].indexOf(event.code) !== -1),
-        right: (event: Event) => event instanceof KeyboardEvent && (['ArrowRight', 'KeyD', 'Numpad6'].indexOf(event.code) !== -1),
-        space: (event: Event) => event instanceof KeyboardEvent && (['Space', 'Numpad5'].indexOf(event.code) !== -1),
-        escape: (event: Event) => event instanceof KeyboardEvent && event.code === 'Escape',
+        up: (event: Event) => event instanceof KeyboardEvent && (['ArrowUp', 'KeyW'].indexOf(event.code) !== -1),
+        down: (event: Event) => event instanceof KeyboardEvent && (['ArrowDown', 'KeyS'].indexOf(event.code) !== -1),
+        left: (event: Event) => event instanceof KeyboardEvent && (['ArrowLeft', 'KeyA'].indexOf(event.code) !== -1),
+        right: (event: Event) => event instanceof KeyboardEvent && (['ArrowRight', 'KeyD'].indexOf(event.code) !== -1),
+        key: (key: string): InputEvent => { return (event: Event) => {
+            return event instanceof KeyboardEvent && (event.code.toLowerCase() === key || (<KeyboardEvent>event).key.toLowerCase() === key)
+        }}
     }
-    public static mouse = {
+    public static mouse: {[index: string]: InputEvent} = {
         click: (event: Event) => event instanceof MouseEvent,
         left: (event: Event) => event instanceof MouseEvent && event.button === 1,
         right: (event: Event) => event instanceof MouseEvent && event.button === 2,
@@ -20,15 +23,17 @@ export class Input {
         scrollUp: (event: Event) => event instanceof WheelEvent && event.deltaY < 0,
         scrollDown: (event: Event) => event instanceof WheelEvent && event.deltaY > 0,
     }
-    public static touchScreen = {
+    public static touchScreen: {[index: string]: InputEvent} = {
         touch: (event: Event) => this.mouse.click(event) || window.TouchEvent && event instanceof TouchEvent,
         swipe: (event: Event) => {
-            const result = window.TouchEvent
-            && event instanceof TouchEvent
-            && Input.touchStart
-            && (
-                Input.touchStart.x - event.touches[0].clientX != 0
-                || Input.touchStart.y - event.touches[0].clientY != 0
+            const result: boolean = Boolean(
+                window.TouchEvent
+                && event instanceof TouchEvent
+                && Input.touchStart
+                && (
+                    Input.touchStart.x - event.touches[0].clientX != 0
+                    || Input.touchStart.y - event.touches[0].clientY != 0
+                )
             );
 
             if (result) Input.touchStart = null;
@@ -76,31 +81,31 @@ export class Input {
             return result;
         },
     }
-    private static touchStart: Point | null = null;
-    private bindings: Map<Function, Map<string, Function>> = new Map();
-    private preventUnload: boolean = false;
+    private static touchStart: Vector2d | null = null;
+    private static bindings: Map<Function, Map<string, Function>> = new Map();
+    private static preventUnload: boolean = false;
 
-    constructor() {
+    public static init? = (): void => {
         window.addEventListener('keydown', e => this.handle(e));
         window.addEventListener('click', e => this.handle(e));
         document.addEventListener('touchstart', e => {
-            Input.touchStart = {
-                x: e.touches[0].clientX,
-                y: e.touches[0].clientY,
-            };
+            this.touchStart = new Vector2d(
+                e.touches[0].clientX,
+                e.touches[0].clientY
+            );
         });
         window.addEventListener('touchmove', e => this.handle(e), false);
         window.addEventListener('beforeunload', e => this.handleUnload(e));
-
+        delete Input.init;
     }
 
-    private handleUnload(event: BeforeUnloadEvent) {
+    private static handleUnload(event: BeforeUnloadEvent) {
         if (this.preventUnload) {
             event.preventDefault();
         }
     }
 
-    private handle(event: Event) {
+    private static handle(event: Event) {
         this.bindings.forEach((callbacks, checkEvent) => {
             if (checkEvent(event)) {
                 callbacks.forEach(callback => callback(event));
@@ -108,7 +113,15 @@ export class Input {
         });
     }
 
-    public listen(event: Function, callback: Function): string  {
+    public static trigger(event: Function) {
+        this.bindings.forEach((callbacks, checkEvent) => {
+            if (checkEvent.toString() === event.toString()) {
+                callbacks.forEach(callback => callback());
+            }
+        });
+    }
+
+    public static listen(event: InputEvent, callback: Function): string  {
         if (event === Input.touchScreen.swipeDown) this.preventUnload = true;
         if (!this.bindings.has(event)) this.bindings.set(event, new Map());
 
@@ -118,7 +131,7 @@ export class Input {
         return uuid;
     }
 
-    public notListen(event: Function, uuid: string): Function | null {
+    public static stopListen(event: InputEvent, uuid: string): Function | null {
         if (event === Input.touchScreen.swipeDown) this.preventUnload = false;
         if (!this.bindings.has(event)) return null;
 
@@ -128,8 +141,12 @@ export class Input {
         return func;
     }
 
-    public deaf(): this {
+    public static deaf(): Input {
         this.bindings = new Map();
         return this;
     }
+}
+
+if (Input.init) {
+    Input.init();
 }

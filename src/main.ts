@@ -1,26 +1,34 @@
 import './assets/css/style.css'
-import {HeartBeatAnimation} from "./HeartBeatAnimation.ts";
 import {Snake} from "./Snake.ts";
+import {MainMenu} from "./MainMenu.ts";
+import {Game} from "./core/Game.ts";
 
-const canvas: HTMLCanvasElement| null = document.querySelector('canvas');
 const gamesContainer: HTMLElement | null = document.querySelector('.ui-top .games-container');
 
-let currGame: Snake | HeartBeatAnimation;
+let currGame: typeof Game;
 
 function startGame() {
-    if (canvas === null) throw 'canvas not exists';
     if (currGame) currGame.end();
     if (gamesContainer) gamesContainer.classList.add('hidden');
     switch (window.location.hash) {
         case '#snake':
-            currGame = new Snake(canvas).begin();
+            currGame = Snake.begin();
             break;
         default:
             if (gamesContainer) gamesContainer.classList.remove('hidden');
-            currGame = new HeartBeatAnimation(canvas).begin();
+            currGame = MainMenu.begin();
             break;
     }
 }
 
 window.addEventListener('hashchange', startGame);
+
+window.addEventListener('resize', () => {
+    currGame.resize();
+});
+
+screen.orientation.addEventListener('change', () => {
+    currGame.resize();
+});
+
 startGame();
