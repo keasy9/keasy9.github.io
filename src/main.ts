@@ -31,4 +31,6 @@ screen.orientation.addEventListener('change', () => {
     currGame.resize();
 });
 
-startGame();
+window.addEventListener('load' ,() => {
+    startGame();
+});
