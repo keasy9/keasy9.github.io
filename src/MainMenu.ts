@@ -2,7 +2,6 @@ import {Game} from "./core/Game.ts";
 import {Screen} from "./core/Screen.ts";
 import {Ui} from "./core/Ui.ts";
 import {Vector2d} from "./core/utils.ts";
-import {Sound} from "./core/Sound.ts";
 import {Input} from "./core/Input.ts";
 
 export class MainMenu extends Game {
@@ -84,33 +83,7 @@ export class MainMenu extends Game {
             [gray1, gray1, null , null , gray1, gray1, gray1, null, gray1, gray1, gray1, null, gray1, gray1, gray1, null, gray1, gray1, gray1, null , null , gray1, null ],
         ];
 
-        const paintNext = (p: { v: Vector2d, color: string | null }[]) => {
-            if (!p.length) {
-                return;
-            }
-
-            const pixel: {v: Vector2d, color: string | null} = p.shift()!;
-            if (pixel.color === null) {
-                Screen.pixel(pixel.v).clear();
-                paintNext(p);
-            } else {
-                Sound.play(`pixelPaint${Math.round(Math.random() * 2)}`);
-
-                Screen.pixel(pixel.v).paint(pixel.color!);
-                setTimeout((p: {v: Vector2d, color: string | null}[]) => {
-                    paintNext(p);
-                }, Math.random() * (100 - 50) + 50, p);
-            }
-        }
-
-        setTimeout(
-            (p: {v: Vector2d, color: string | null}[]) => { paintNext(p) },
-            Math.random() * (100 - 50) + 50,
-            Screen.matrix(textStart, text).array
-                .map(value => ({ value, sort: Math.random() }))
-                .sort((a, b) => a.sort - b.sort)
-                .map(({ value }) => value)
-        );
+        Screen.matrix(textStart, text).paint();
 
         Ui.touchScreen.button('pause', 'pauseButton.png').event = Input.keyboard.key('escape');
 
