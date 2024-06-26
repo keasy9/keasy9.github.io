@@ -160,7 +160,10 @@ export class Snake extends Game {
         if (gameover) {
             Ui.menu('gameover').label('score').text = `score: ${this.score}`;
             Ui.menu('gameover').line('score');
-            Ui.menu('gameover').button('restart').onclick = () => this.begin();
+            Ui.menu('gameover').button('restart').onclick = () => {
+                Ui.menu('restart').close();
+                this.begin();
+            }
             Ui.menu('gameover').button('restart').text = 'restart';
             Ui.menu('gameover').button('game-rules').onclick = () => {
                 this.prevMenu = 'gameover';
@@ -175,6 +178,7 @@ export class Snake extends Game {
         } else {
             Ui.menu('main').remove();
             Ui.menu('game-rules').remove();
+            Ui.menu('gameover').remove();
         }
 
         return this;
