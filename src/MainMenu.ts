@@ -11,15 +11,6 @@ export class MainMenu extends Game {
     private static frame: number = 0;
     private static intervalId?: number;
 
-    public static resize() {
-        if (this.resizeTimer) {
-            clearTimeout(this.resizeTimer);
-        }
-
-        this.resizeTimer = setTimeout(() => { this._resize() }, 100);
-        return this;
-    }
-
     public static _resize() {
         Screen.autoFit(3000, 30000);
         if (Screen.width < 30) {

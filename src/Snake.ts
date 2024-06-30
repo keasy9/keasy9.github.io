@@ -33,15 +33,6 @@ export class Snake extends Game {
         },
     };
 
-    public static resize() {
-        if (this.resizeTimer) {
-            clearTimeout(this.resizeTimer);
-        }
-
-        this.resizeTimer = setTimeout(() => { this._resize() }, 100);
-        return this;
-    }
-
     protected static _resize() {
         const oldSize = Screen.size;
 
