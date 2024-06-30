@@ -69,10 +69,13 @@ export class Snake extends Game {
             this.drawBody();
         }
 
+        Ui.on(new Vector2d(Screen.width - 4, 1)).button('pause', 'pauseButton.png').event = Input.keyboard.key('escape');
+        Ui.button('pause').scale = 2;
+        Ui.on(new Vector2d(1, 1)).label('score').content = `score ${this.score}`;
     }
 
     public static begin() {
-        Screen.fill();
+        this._resize();
         for (const [dirName, dir] of Object.entries(this.directions)) {
             Input.listen((<InputEvent>Input.keyboard[dirName]), () => {
                 if (this.continue && this.direction !== dir.opposite) {
@@ -80,9 +83,6 @@ export class Snake extends Game {
                 }
             });
         }
-
-        Ui.touchScreen.button('pause', 'pauseButton.png').event = Input.keyboard.key('escape');
-        Ui.touchScreen.button('pause', 'pauseButton.png').scale = 2;
 
         Input.listen(Input.keyboard.key('escape'), () => {
             if (this.prevMenu) {
@@ -95,7 +95,7 @@ export class Snake extends Game {
         });
 
         if (window.TouchEvent) {
-            Ui.touchScreen.dPad.link().link(true).scale = 2;
+            Ui.dPad().link().link(true).scale = 2;
         }
 
         Ui.menu('rules').switch('edge-death').onchange = (val: boolean) => this.edgeDeath = val;
@@ -128,8 +128,6 @@ export class Snake extends Game {
         Ui.menu('main').button('game-rules').text = 'game rules'
         Ui.menu('main').button('exit').onclick = () => document.location.hash = 'home';
         Ui.menu('main').button('exit').text = 'exit';
-
-        this._resize();
 
         const centerX: number = Math.round(Screen.width/2);
         const centerY: number = Math.round(Screen.height/2);
@@ -174,11 +172,9 @@ export class Snake extends Game {
             Ui.menu('gameover').button('exit').text = 'exit';
             Ui.menu('gameover').open();
 
-            Ui.touchScreen.dPad.remove();
+            Ui.dPad().remove();
         } else {
-            Ui.menu('main').remove();
-            Ui.menu('game-rules').remove();
-            Ui.menu('gameover').remove();
+            Ui.clear();
         }
 
         return this;
@@ -201,6 +197,7 @@ export class Snake extends Game {
             Sound.play(`scoreUp1`);
             this.placeApple();
             this.score++;
+            Ui.label('score').content = `score ${this.score}`;
         } else {
             const tail = this.body[this.body.length - 1];
             this.body.pop();

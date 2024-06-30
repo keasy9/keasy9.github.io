@@ -12,69 +12,101 @@ function playSound() {
     return Sound.play(`menuElementFlip${Math.round(Math.random() * 2)}`);
 }
 
-export enum TouchScreenElementPosition {
-    TopRight = 'top-right',
-    BottomRight = 'bottom-right',
-    TopLeft = 'top-left',
-    BottomLeft = 'bottom-left',
-    TopCenter = 'top-center',
-    BottomCenter = 'bottom-center',
-    CenterCenter = 'center-center',
-    LeftCenter = 'left-center',
-    RightCenter = 'right-center',
-}
+let elementsPool: Map<string, UiElement | Menu> = new Map();
 
 export class Ui {
-    public static readonly touchScreen = new class {
-        private elements: Map<string, TouchScreenUiElement> = new Map();
+    private static position?: Vector2d;
 
-        public get dPad(): TouchScreenDPad {
-            if (!this.elements.has('d-pad')) {
-                const elem = document.createElement('div');
-                elem.classList.add('d-pad');
-                elem.id = 'd-pad';
-                elem.insertAdjacentHTML(
-                    'beforeend',
-                    `<button><img src="${new URL('../assets/img/dPadArrow.png', import.meta.url).href}"/></button>`.repeat(4)
-                );
+    public static on(position: Vector2d, isOnScreen: boolean = true): typeof Ui {
+        if (isOnScreen) {
+            position.multiply(Screen.scale).round();
+        }
+        this.position = position;
+        return this;
+    }
 
-                uiContainer.appendChild(elem);
+    public static dPad(): UiDPad {
+        if (!elementsPool.has('d-pad')) {
+            const elem = document.createElement('div');
+            elem.classList.add('d-pad');
+            elem.id = 'd-pad';
+            elem.insertAdjacentHTML(
+                'beforeend',
+                `<button><img src="${new URL('../assets/img/dPadArrow.png', import.meta.url).href}"/></button>`.repeat(4)
+            );
 
-                this.elements.set('d-pad', new TouchScreenDPad(elem))
-            }
-
-            return (<TouchScreenDPad>this.elements.get('d-pad'));
+            uiContainer.appendChild(elem);
+            elementsPool.set('d-pad', new UiDPad(elem));
         }
 
-        public button(name: string, sprite?: string): TouchScreenButton {
-            name = `${name}-button`;
-            if (!this.elements.has(name)) {
-                if (!sprite) {
-                    throw new TypeError('Ui.button expects 2 arguments when creating new button but got 1')
-                }
-                const elem = document.createElement('button');
-                elem.insertAdjacentHTML('beforeend', `<img src="${new URL(`../assets/img/${sprite}`, import.meta.url).href}" />`);
-                elem.classList.add(TouchScreenElementPosition.TopRight);
-                elem.id = name;
-
-                uiContainer.appendChild(elem);
-
-                this.elements.set(name, new TouchScreenButton(elem, name));
-            }
-
-            return (<TouchScreenButton>this.elements.get(name));
+        const dPad = <UiDPad>elementsPool.get('d-pad');
+        if (this.position) {
+            dPad.position = this.position;
+            delete this.position;
         }
 
-        public removeElem(name: string) {
-            if (this.elements.has(name)) {
-                this.elements.get(name)!.remove();
-                this.elements.delete(name);
+        return dPad;
+    }
+
+    public static button(name: string, sprite?: string): UiButton {
+        name = `${name}-button`;
+        if (!elementsPool.has(name)) {
+            if (!sprite) {
+                throw new TypeError('Ui.button expects 2 arguments when creating new button but got 1')
             }
+            const elem = document.createElement('button');
+            elem.insertAdjacentHTML('beforeend', `<img src="${new URL(`../assets/img/${sprite}`, import.meta.url).href}" />`);
+            elem.id = name;
+
+            uiContainer.appendChild(elem);
+            elementsPool.set(name, new UiButton(elem, name));
         }
-    };
+
+        const btn = <UiButton>elementsPool.get(name);
+        if (this.position) {
+            btn.position = this.position;
+            delete this.position;
+        }
+
+        return btn;
+    }
+
+    public static label(name: string): UiLabel  {
+        name = `${name}-text`;
+        if (!elementsPool.has(name)) {
+            const elem = document.createElement('span');
+            elem.id = name;
+
+            uiContainer.appendChild(elem);
+            elementsPool.set(name, new UiLabel(elem, name));
+        }
+
+        const lbl = <UiLabel>elementsPool.get(name);
+        if (this.position) {
+            lbl.position = this.position;
+            delete this.position;
+        }
+
+        return lbl;
+    }
 
     public static menu(name: string): Menu {
-        return Menu.get(name);
+        name = `${name}-menu`;
+        if (!elementsPool.has(name)) {
+            elementsPool.set(name, new Menu(name));
+        }
+        return <Menu>elementsPool.get(name);
+    }
+
+    public static clear(): Ui {
+        if (Menu.current) {
+            Menu.current.close();
+        }
+        elementsPool.forEach((elem) => {
+            elem.remove();
+        });
+        elementsPool = new Map();
+        return this;
     }
 }
 
@@ -89,7 +121,6 @@ export enum MenuElementType {
 }
 
 class Menu {
-    private static menus: Map<string, Menu> = new Map();
     private elements: Map<string, MenuElement> = new Map();
     private static openedMenu?: Menu;
     private readonly name: string;
@@ -101,18 +132,10 @@ class Menu {
         this.htmlElement = document.createElement('div');
         this.htmlElement.classList.add('menu');
         this.htmlElement.classList.add('hidden');
-        this.htmlElement.id = `menu_${name}`;
+        this.htmlElement.id = name;
         this.htmlElement.insertAdjacentHTML('beforeend', '<div class="container"></div>')
 
         uiContainer.appendChild(this.htmlElement);
-    }
-
-    public static get(name: string): Menu {
-        if (!this.menus.has(name)) {
-            this.menus.set(name, new Menu(name));
-        }
-
-        return this.menus.get(name)!;
     }
 
     public open(): this {
@@ -149,14 +172,14 @@ class Menu {
         return this;
     }
 
-    public remove(hideOverlayIfOpened: boolean = true): boolean {
-        this.close(hideOverlayIfOpened);
+    public remove() {
+        this.close();
         this.htmlElement.remove();
-        return Menu.menus.delete(this.name);
+        elementsPool.delete(this.name);
     }
 
     public elem(elemType: MenuElementType, name: string): MenuElement {
-        name = `${elemType}_${name}`
+        name = `${name}-${elemType}`
         if (!this.elements.has(name)) {
             let elem: HTMLElement;
             switch (elemType) {
@@ -190,7 +213,7 @@ class Menu {
                     break;
             }
             elem!.classList.add(elemType);
-            elem!.id = `menu_${this.name}_${name}`;
+            elem!.id = `${name}-${this.name}-menu`;
             this.htmlElement.firstElementChild!.appendChild(elem!);
         }
         return this.elements.get(name)!;
@@ -198,14 +221,14 @@ class Menu {
 
     public removeElem(elemType: MenuElementType | string, name?: string): this {
         if (name !== undefined) {
-            name = `${elemType}_${name}`;
+            name = `${name}-${elemType}`;
         } else {
             name = elemType;
         }
 
         if (this.elements.has(name)) {
             this.elements.delete(name);
-            this.htmlElement.querySelector(`#menu_${this.name}_${name}`)?.remove();
+            this.htmlElement.querySelector(`#${name}-${this.name}-menu`)?.remove();
         }
 
         return this;
@@ -239,6 +262,9 @@ class Menu {
         return <SpaceMenuElement>this.elem(MenuElementType.Space, name);
     }
 
+    public static get current(): Menu | undefined {
+        return this.openedMenu;
+    }
 }
 
 abstract class MenuElement {
@@ -641,25 +667,12 @@ class SelectionMenuElement extends NavigationMenuElement {
     }
 }
 
-class TouchScreenUiElement {
-    public readonly allowedPositions: TouchScreenElementPosition[] = Object.values(TouchScreenElementPosition);
-    protected name: string = 'element';
-    constructor(protected readonly htmlElement: HTMLElement) {}
+class UiElement {
+    constructor(protected readonly htmlElement: HTMLElement, protected name: string) {}
 
-    public set position(position: Vector2d | TouchScreenElementPosition) {
-        if (typeof position === 'string' && this.allowedPositions.indexOf(position) !== -1) {
-            this.htmlElement.style.removeProperty('left');
-            this.htmlElement.style.removeProperty('top');
-            Object.values(TouchScreenElementPosition).forEach(elem => {
-                this.htmlElement.classList.toggle(elem, elem === position);
-            });
-        } else {
-            Object.values(TouchScreenElementPosition).forEach(elem => {
-                this.htmlElement.classList.remove(elem);
-            });
-            this.htmlElement.style.left = `${(<Vector2d>position).x}px`
-            this.htmlElement.style.top = `${(<Vector2d>position).y}px`
-        }
+    public set position(position: Vector2d) {
+        this.htmlElement.style.left = `${(<Vector2d>position).x}px`;
+        this.htmlElement.style.top = `${(<Vector2d>position).y}px`;
     }
 
     public set scale(scale: number) {
@@ -672,48 +685,12 @@ class TouchScreenUiElement {
 
     public remove() {
         this.htmlElement.remove();
-        Ui.touchScreen.removeElem(this.name);
+        elementsPool.delete(this.name);
     }
 }
 
-class TouchScreenPositionedUiElement extends TouchScreenUiElement{
-    public readonly allowedPositions: TouchScreenElementPosition[] = Object.values(TouchScreenElementPosition);
-
-    public set position(position: TouchScreenElementPosition) {
-        if (this.allowedPositions.indexOf(position) !== -1) {
-            Object.values(TouchScreenElementPosition).forEach(elem => {
-                this.htmlElement.classList.toggle(elem, elem === position);
-            });
-        }
-    }
-}
-
-class TouchScreenButton extends TouchScreenUiElement {
+class UiButton extends UiElement {
     private _event?: ((event: Event) => boolean) | null;
-
-    constructor(protected readonly htmlElement: HTMLElement, protected name: string) {
-        super(htmlElement);
-    }
-
-    public setPosition(position: Vector2d | TouchScreenElementPosition, global: boolean = true) {
-        if (Object.values(TouchScreenElementPosition).includes(position as TouchScreenElementPosition)) {
-            this.htmlElement.style.removeProperty('top');
-            this.htmlElement.style.removeProperty('left');
-            this.htmlElement.classList.add(<string>position);
-
-        } else {
-            if (!global) {
-                let rect = Screen.boundingRect;
-                (<Vector2d>position).x += Math.round(rect.x);
-                (<Vector2d>position).y += Math.round(rect.y);
-            }
-
-            this.htmlElement.style.left = `${(<Vector2d>position).x}px`;
-            this.htmlElement.style.top = `${(<Vector2d>position).y}px`;
-        }
-
-        return this;
-    }
 
     public set event(event: InputEvent | null) {
         if (event === null) {
@@ -736,18 +713,22 @@ class TouchScreenButton extends TouchScreenUiElement {
     }
 }
 
-class TouchScreenDPad extends TouchScreenPositionedUiElement {
-    public readonly allowedPositions: TouchScreenElementPosition[] = [
-        TouchScreenElementPosition.BottomLeft,
-        TouchScreenElementPosition.BottomRight,
-        TouchScreenElementPosition.BottomCenter,
-    ];
-    protected name: string = 'd-pad';
+class UiLabel extends UiElement {
+    public set content(content: string) {
+        this.htmlElement.innerHTML = content;
+    }
+
+    public get content(): string {
+        return this.htmlElement.innerHTML;
+    }
+}
+
+class UiDPad extends UiElement {
     private bindArrows: boolean = false;
     private bindWASD: boolean = false;
 
     constructor(protected readonly htmlElement: HTMLElement) {
-        super(htmlElement);
+        super(htmlElement, 'd-pad');
 
         this.htmlElement.ontouchstart = this.htmlElement.onpointerdown = (e: Event) => {
             if (e.target !== this.htmlElement) {
@@ -781,7 +762,6 @@ class TouchScreenDPad extends TouchScreenPositionedUiElement {
                 }
             }
         }
-        this.position = TouchScreenElementPosition.BottomCenter;
     }
 
     private onKeyDown(key: string, type: string, force: boolean = false) {

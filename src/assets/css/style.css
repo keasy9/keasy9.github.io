@@ -39,11 +39,10 @@ body {
 
     .ui-full {
         z-index: 999;
-        left: 0;
         width: 100%;
         padding: 1rem 2rem;
-        top: 0;
         height: 0;
+        position: absolute;
 
         .overlay {
             position: absolute;
@@ -209,44 +208,10 @@ body {
             }
         }
 
-        & > button, & > .d-pad {
+        & > button, & > .d-pad, & > span {
             --scale: 1;
             position: absolute;
             display: inline-block;
-
-            &.top-right {
-                right: calc(20px * var(--scale) + 20px);
-                top: 20px;
-            }
-
-            &.top-left {
-                top: 20px;
-                left: calc(20px * var(--scale) + 20px);
-            }
-
-            &.top-center {
-                margin: 0 auto;
-                left: 0;
-                right: 0;
-                top: 20px;
-            }
-
-            &.bottom-right {
-                right: calc(20px * var(--scale) + 20px);
-                bottom: 20px;
-            }
-
-            &.bottom-left {
-                bottom: 20px;
-                left: calc(20px * var(--scale) + 20px);
-            }
-
-            &.bottom-center {
-                margin: 0 auto;
-                left: 0;
-                right: 0;
-                bottom: 20px;
-            }
         }
 
         & > button {

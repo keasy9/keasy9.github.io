@@ -8,6 +8,7 @@ export class Screen {
     private static _width: number = 0;
     private static _height: number = 0;
     public static backgroundColor: string = 'black';
+    private static _scale: number = 1;
 
     public static set size(size: Vector2d) {
         canvas.width = size.x;
@@ -19,10 +20,12 @@ export class Screen {
     public static autoScale(): typeof Screen {
         if (innerWidth < innerHeight) {
             canvas.style.width = `${(innerWidth).toString()}px`;
-            canvas.style.height = `${((this._height * innerWidth) / this._width).toString()}px`;
+            this._scale = innerWidth / canvas.width;
+            canvas.style.height = `${(this._height * this._scale).toString()}px`;
         } else {
             canvas.style.height = `${(innerHeight).toString()}px`;
-            canvas.style.width = `${((this._width * innerHeight) / this._height).toString()}px`;
+            this._scale = innerHeight / canvas.height;
+            canvas.style.width = `${(this._width * this._scale).toString()}px`;
         }
 
         return this;
@@ -31,6 +34,7 @@ export class Screen {
     public static resetScale(): typeof Screen {
         canvas.style.removeProperty('width');
         canvas.style.removeProperty('height');
+        this._scale = 1;
 
         return this;
     }
@@ -53,6 +57,7 @@ export class Screen {
         }
 
         this.size = new Vector2d(Math.floor(width), Math.floor(height));
+        this._scale = pixelSize;
 
         return this;
     }
@@ -98,8 +103,8 @@ export class Screen {
         return Matrix;
     }
 
-    public static get boundingRect(): DOMRect {
-        return canvas.getBoundingClientRect();
+    public static get scale(): number {
+        return this._scale;
     }
 }
 

@@ -85,7 +85,8 @@ export class MainMenu extends Game {
 
         Screen.matrix(textStart, text).paint();
 
-        Ui.touchScreen.button('pause', 'pauseButton.png').event = Input.keyboard.key('escape');
+        Ui.on(new Vector2d(Screen.width - 8, 1)).button('pause', 'pauseButton.png').event = Input.keyboard.key('escape');
+        Ui.button('pause').scale = 2;
 
         Ui.menu('games').button('snake').text = 'snake';
         Ui.menu('games').button('snake').onclick = () => {
@@ -109,7 +110,7 @@ export class MainMenu extends Game {
 
     public static end() {
         Input.deaf();
-        Ui.menu('games').remove();
+        Ui.clear();
         this.continue = false;
         clearInterval(this.intervalId);
         return MainMenu;

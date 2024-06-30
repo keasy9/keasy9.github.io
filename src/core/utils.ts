@@ -15,9 +15,14 @@ export class Vector2d {
         return this;
     }
 
-    public multiply(vector: Vector2d): this {
-        this.x *= vector.x;
-        this.y *= vector.y;
+    public multiply(vector: Vector2d | number): this {
+        if (typeof vector === 'number') {
+            this.x *= vector;
+            this.y *= vector;
+        } else {
+            this.x *= vector.x;
+            this.y *= vector.y;
+        }
 
         return this;
     }
