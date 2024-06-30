@@ -91,6 +91,11 @@ export class MainMenu extends Game {
         Ui.menu('games').button('snake').onclick = () => {
             document.location.hash = 'snake';
         }
+        Ui.menu('games').line('sep');
+        Ui.menu('games').button('back').text = 'back';
+        Ui.menu('games').button('back').onclick = () => {
+            Ui.menu('games').toggle();
+        };
 
         Input.listen(Input.keyboard.key('escape'), () => {
             Ui.menu('games').toggle();
