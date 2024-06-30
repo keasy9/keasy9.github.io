@@ -1,4 +1,4 @@
-import {PaintMatrix} from "../types.tp.ts";
+import {PaintMatrix} from "./utils.ts";
 import {Vector2d} from "./utils.ts";
 
 const canvas = document.querySelector('canvas')!;
