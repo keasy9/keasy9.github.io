@@ -12,6 +12,15 @@ export class MainMenu extends Game {
     private static intervalId?: number;
 
     public static resize() {
+        if (this.resizeTimer) {
+            clearTimeout(this.resizeTimer);
+        }
+
+        this.resizeTimer = setTimeout(() => { this._resize() }, 100);
+        return this;
+    }
+
+    public static _resize() {
         Screen.autoFit(3000, 30000);
         if (Screen.width < 30) {
             Screen.size = new Vector2d(30, 30);
@@ -21,6 +30,22 @@ export class MainMenu extends Game {
         this.centerX = Math.round(Screen.width/2);
         this.centerY = Math.round(Screen.height/2);
         this.drawFrame();
+
+        Ui.on(new Vector2d(Screen.width - 8, 1)).button('pause', 'pauseButton.png');
+
+        const gray1 = '#1E90FF';
+
+        Screen.matrix(
+            new Vector2d(this.centerX - 11, this.centerY + 10),
+            [
+                [gray1, gray1, null , null , gray1, null , null , null, gray1, null , gray1, null, gray1, gray1, gray1, null, gray1, gray1, gray1, null , gray1, null , gray1],
+                [gray1, null , gray1, null , gray1, null , null , null, gray1, null , gray1, null, gray1, null , null , null, gray1, null , null , null , gray1, null , gray1],
+                [gray1, gray1, null , null , gray1, null , null , null, gray1, null , gray1, null, gray1, gray1, gray1, null, gray1, gray1, gray1, null , gray1, null , gray1],
+                [gray1, null , gray1, null , gray1, null , null , null, gray1, null , gray1, null, null , null , gray1, null, null , null , gray1, null , null , gray1, null ],
+                [gray1, gray1, null , null , gray1, gray1, gray1, null, gray1, gray1, gray1, null, gray1, gray1, gray1, null, gray1, gray1, gray1, null , null , gray1, null ],
+            ]
+        ).paint();
+
         return this;
     }
 
@@ -72,18 +97,6 @@ export class MainMenu extends Game {
         ];
 
         this.resize();
-
-        const textStart = new Vector2d(this.centerX - 11, this.centerY + 10);
-
-        const text: (string | null)[][] = [
-            [gray1, gray1, null , null , gray1, null , null , null, gray1, null , gray1, null, gray1, gray1, gray1, null, gray1, gray1, gray1, null , gray1, null , gray1],
-            [gray1, null , gray1, null , gray1, null , null , null, gray1, null , gray1, null, gray1, null , null , null, gray1, null , null , null , gray1, null , gray1],
-            [gray1, gray1, null , null , gray1, null , null , null, gray1, null , gray1, null, gray1, gray1, gray1, null, gray1, gray1, gray1, null , gray1, null , gray1],
-            [gray1, null , gray1, null , gray1, null , null , null, gray1, null , gray1, null, null , null , gray1, null, null , null , gray1, null , null , gray1, null ],
-            [gray1, gray1, null , null , gray1, gray1, gray1, null, gray1, gray1, gray1, null, gray1, gray1, gray1, null, gray1, gray1, gray1, null , null , gray1, null ],
-        ];
-
-        Screen.matrix(textStart, text).paint();
 
         Ui.on(new Vector2d(Screen.width - 8, 1)).button('pause', 'pauseButton.png').event = Input.keyboard.key('escape');
         Ui.button('pause').scale = 2;
