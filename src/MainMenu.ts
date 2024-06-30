@@ -108,6 +108,7 @@ export class MainMenu extends Game {
     }
 
     public static end() {
+        Input.deaf();
         Ui.menu('games').remove();
         this.continue = false;
         clearInterval(this.intervalId);
