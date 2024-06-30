@@ -5,8 +5,6 @@ import {Vector2d} from "./core/utils.ts";
 import {Ui} from "./core/Ui.ts";
 import {Sound} from "./core/Sound.ts";
 
-// TODO: отображение текущего рекорда
-
 export class Snake extends Game {
     private static direction: string = 'up';
     private static nextDirection: string = 'up';
@@ -72,6 +70,10 @@ export class Snake extends Game {
         Ui.on(new Vector2d(Screen.width - 4, 1)).button('pause', 'pauseButton.png').event = Input.keyboard.key('escape');
         Ui.button('pause').scale = 2;
         Ui.on(new Vector2d(1, 1)).label('score').content = `score ${this.score}`;
+
+        if (window.TouchEvent) {
+            Ui.on(new Vector2d(Screen.width - 10, Screen.height - 10)).dPad().link().link(true).scale = 2;
+        }
     }
 
     public static begin() {
@@ -93,10 +95,6 @@ export class Snake extends Game {
                 this.togglePause();
             }
         });
-
-        if (window.TouchEvent) {
-            Ui.dPad().link().link(true).scale = 2;
-        }
 
         Ui.menu('rules').switch('edge-death').onchange = (val: boolean) => this.edgeDeath = val;
         Ui.menu('rules').switch('edge-death').text = 'death from edge';
