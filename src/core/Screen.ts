@@ -12,9 +12,9 @@ export class Screen {
 
     public static set size(size: Vector2d) {
         canvas.width = size.x;
-        this._width = canvas.width - 1;
+        this._width = size.x - 1;
         canvas.height = size.y;
-        this._height = canvas.height - 1;
+        this._height = size.y - 1;
     }
 
     public static autoScale(): typeof Screen {

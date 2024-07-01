@@ -1,6 +1,3 @@
-import {Screen} from "./Screen.ts";
-import {Vector2d} from "./utils.ts";
-
 export abstract class Game {
     protected static continue: boolean = false;
     protected static speed: number = 1;
@@ -18,7 +15,7 @@ export abstract class Game {
     protected static _resize() {}
 
     public static begin() {
-        Screen.size = new Vector2d(100, 100);
+        this._resize();
         this.continue = true;
         return this;
     }

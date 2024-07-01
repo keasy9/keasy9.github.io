@@ -106,7 +106,6 @@ export class MainMenu extends Game {
             Ui.menu('games').toggle();
         });
 
-        this.continue = true;
         this.go();
 
         return MainMenu;

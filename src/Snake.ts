@@ -68,7 +68,8 @@ export class Snake extends Game {
     }
 
     public static begin() {
-        this._resize();
+        super.begin();
+
         for (const [dirName, dir] of Object.entries(this.directions)) {
             Input.listen((<InputEvent>Input.keyboard[dirName]), () => {
                 if (this.continue && this.direction !== dir.opposite) {
@@ -131,7 +132,6 @@ export class Snake extends Game {
 
         this.drawBody();
 
-        this.continue = true;
         this.placeApple();
         this.go();
 
