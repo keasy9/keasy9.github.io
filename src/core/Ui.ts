@@ -1,6 +1,6 @@
 import {Input, InputEvent} from "./Input.ts";
 import {Sound} from "./Sound.ts";
-import {Vector2d} from "./utils.ts";
+import {Vector2d} from "./Vector2d.ts";
 import {Screen} from "./Screen.ts";
 
 const uiContainer: HTMLDivElement = document.querySelector('.ui-full')!;
@@ -19,7 +19,7 @@ export class Ui {
 
     public static on(position: Vector2d, isOnScreen: boolean = true): typeof Ui {
         if (isOnScreen) {
-            position.multiply(Screen.scale).round();
+            position = position.multiply(Screen.scale).add(Screen.position).round();
         }
         this.position = position;
         return this;
@@ -99,9 +99,6 @@ export class Ui {
     }
 
     public static clear(): Ui {
-        if (Menu.current) {
-            Menu.current.close();
-        }
         elementsPool.forEach((elem) => {
             elem.remove();
         });

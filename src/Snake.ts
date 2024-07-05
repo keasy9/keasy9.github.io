@@ -1,7 +1,7 @@
 import {Game} from "./core/Game.ts";
 import {Input, InputEvent} from "./core/Input.ts";
 import {Screen} from "./core/Screen.ts";
-import {Vector2d} from "./core/utils.ts";
+import {Vector2d} from "./core/Vector2d.ts";
 import {Ui} from "./core/Ui.ts";
 import {Sound} from "./core/Sound.ts";
 
@@ -46,11 +46,11 @@ export class Snake extends Game {
             const head = this.body.shift();
 
             let newBody: Vector2d[] = [
-                head!.clone().multiply(Screen.size).divide(oldSize).round().maxLimit(Screen.size)
+                head!.multiply(Screen.size).divide(oldSize).round().maxLimit(Screen.size)
             ];
 
             this.body.forEach((point) => {
-                newBody.push(newBody[0].clone().substract(head!.clone().substract(point)));
+                newBody.push(newBody[0].substract(head!.substract(point)));
             });
 
             this.body = newBody;
@@ -178,9 +178,7 @@ export class Snake extends Game {
 
     private static move(): void {
         const head = this.body[0];
-        const newHead: Vector2d = head.clone();
-
-        newHead.add(this.directions[this.nextDirection].vector);
+        const newHead: Vector2d = head.add(this.directions[this.nextDirection].vector);
 
         if (this.apple && this.apple.x === newHead.x && this.apple.y === newHead.y) {
             Sound.play(`scoreUp1`);

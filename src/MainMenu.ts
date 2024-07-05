@@ -1,7 +1,7 @@
 import {Game} from "./core/Game.ts";
 import {Screen} from "./core/Screen.ts";
 import {Ui} from "./core/Ui.ts";
-import {Vector2d} from "./core/utils.ts";
+import {Vector2d} from "./core/Vector2d.ts";
 import {Input} from "./core/Input.ts";
 
 export class MainMenu extends Game {
@@ -96,9 +96,13 @@ export class MainMenu extends Game {
         Ui.menu('games').button('snake').onclick = () => {
             document.location.hash = 'snake';
         }
+        Ui.menu('games').button('tetris').text = 'tetris';
+        Ui.menu('games').button('tetris').onclick = () => {
+            document.location.hash = 'tetris';
+        }
         Ui.menu('games').line('sep');
-        Ui.menu('games').button('back').text = 'back';
-        Ui.menu('games').button('back').onclick = () => {
+        Ui.menu('games').button('close').text = 'close';
+        Ui.menu('games').button('close').onclick = () => {
             Ui.menu('games').toggle();
         };
 
@@ -132,9 +136,11 @@ export class MainMenu extends Game {
     }
 
     private static drawFrame() {
-        Screen.matrix(
-            new Vector2d(this.centerX - 14, this.centerY - 8),
-            this.frames[this.frame],
-        ).paint();
+        if (this.frames[this.frame]) {
+            Screen.matrix(
+                new Vector2d(this.centerX - 14, this.centerY - 8),
+                this.frames[this.frame],
+            ).paint();
+        }
     }
 }

@@ -1,7 +1,8 @@
-import './assets/css/style.css'
+import './assets/css/style.css';
 import {Snake} from "./Snake.ts";
 import {MainMenu} from "./MainMenu.ts";
 import {Game} from "./core/Game.ts";
+import {Tetris} from "./Tetris.ts";
 
 const gamesContainer: HTMLElement | null = document.querySelector('.ui-top .games-container');
 
@@ -14,6 +15,9 @@ function startGame() {
         case '#snake':
             currGame = Snake.begin();
             break;
+        case '#tetris':
+            currGame = Tetris.begin();
+            break;
         default:
             if (gamesContainer) gamesContainer.classList.remove('hidden');
             currGame = MainMenu.begin();
@@ -24,7 +28,9 @@ function startGame() {
 window.addEventListener('hashchange', startGame);
 
 window.addEventListener('resize', () => {
-    currGame.resize();
+    if (currGame) {
+        currGame.resize();
+    }
 });
 
 screen.orientation.addEventListener('change', () => {
