@@ -89,7 +89,7 @@ export class MainMenu extends Game {
 
         this.resize();
 
-        Ui.on(new Vector2d(Screen.width - 8, 1)).button('pause', 'pauseButton.png').event = Input.keyboard.key('escape');
+        Ui.on(new Vector2d(Screen.width - 8, 1)).button('pause', 'pauseButton.png').link('escape');
         Ui.button('pause').scale = 2;
 
         Ui.menu('games').button('snake').text = 'snake';
@@ -106,7 +106,7 @@ export class MainMenu extends Game {
             Ui.menu('games').toggle();
         };
 
-        Input.listen(Input.keyboard.key('escape'), () => {
+        Input.bind(Input.keyboard.key('escape'), 'pause').link('pause', () => {
             Ui.menu('games').toggle();
         });
 
@@ -116,7 +116,7 @@ export class MainMenu extends Game {
     }
 
     public static end() {
-        Input.deaf();
+        Input.clear();
         Ui.clear();
         this.continue = false;
         clearInterval(this.intervalId);

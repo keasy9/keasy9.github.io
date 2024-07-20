@@ -1,5 +1,5 @@
 import {Game} from "./core/Game.ts";
-import {Input} from "./core/Input.ts";
+import {drag, Input, InputType} from "./core/Input.ts";
 import {Ui} from "./core/Ui.ts";
 import {Screen} from "./core/Screen.ts";
 import {Vector2d} from "./core/Vector2d.ts";
@@ -117,7 +117,7 @@ export class Tetris extends Game {
     protected static _resize() {
         Screen.size = new Vector2d(15, 20);
         Screen.autoFit(100, 500).fill();
-        Ui.on(new Vector2d(innerWidth - 100, 20), false).button('pause', 'pauseButton.png').event = Input.keyboard.key('escape');
+        Ui.on(new Vector2d(innerWidth - 100, 20), false).button('pause', 'pauseButton.png').link('escape');
         Ui.button('pause', 'pauseButton.png').scale = 2;
         Ui.on(new Vector2d(0, 0)).label('score').content = `score: ${this.score}`;
 
@@ -139,61 +139,40 @@ export class Tetris extends Game {
         Physics.collider('throwed');
         this.throwFigure();
 
-        Input.listen(Input.keyboard.key('escape'), () => {
-            this.togglePause();
-        });
-
-        // @ts-ignore
-        Input.listen(Input.keyboard.left, () => {
-            if (this.continue) {
-                this.moveFigure(new Vector2d(-1, 0));
-            }
-        });
-
-        // @ts-ignore
-        Input.listen(Input.keyboard.right, () => {
-            if (this.continue) {
-                this.moveFigure(new Vector2d(1, 0));
-            }
-        });
-
-        // @ts-ignore
-        Input.listen(Input.keyboard.down, () => {
-            if (this.continue && this.currentFigure) {
-                if (!this.moveFigure(new Vector2d(0, 1))) {
-                    this.freezeFigure();
-                    this.throwFigure();
-                } else {
-                    this.addScore(1);
-                    Ui.label('score').content = `score: ${this.score}`;
+        Input
+            .bind(Input.touchScreen.swipe(drag.left, {interval: 100, delay: 200}), 'left')
+            .bind(Input.keyboard.key('a', {type: InputType.Up, interval: 100, delay: 200}), 'left')
+            .bind(Input.keyboard.key('arrowLeft', {type: InputType.Up, interval: 100, delay: 200}), 'left')
+            .bind(Input.touchScreen.swipe(drag.right, {interval: 100, delay: 200}), 'right')
+            .bind(Input.keyboard.key('d', {type: InputType.Up, interval: 100, delay: 200}), 'right')
+            .bind(Input.keyboard.key('arrowRight', {type: InputType.Up, interval: 100, delay: 200}), 'right')
+            .bind(Input.touchScreen.touch(), 'rotate')
+            .bind(Input.keyboard.key('w'), 'rotate')
+            .bind(Input.keyboard.key('arrowUp'), 'rotate')
+            .bind(Input.touchScreen.touch({interval: 200, delay: 400}), 'down')
+            .bind(Input.keyboard.key('s', {type: InputType.Up, interval: 100, delay: 200}), 'down')
+            .bind(Input.keyboard.key('arrowDown', {type: InputType.Up, interval: 100, delay: 200}), 'down')
+            .bind(Input.keyboard.key('escape'), 'pause')
+            .link('left', () => {
+                if (this.continue) this.moveFigure(new Vector2d(-1, 0));
+            }).link('right', () => {
+                // вызывается, но в игре не срабатывает
+                if (this.continue) this.moveFigure(new Vector2d(1, 0));
+            }).link('rotate', () => {
+                if (this.currentFigure && this.continue) this.rotateFigure();
+            }).link('down', () => {
+                if (this.continue && this.currentFigure) {
+                    if (!this.moveFigure(new Vector2d(0, 1))) {
+                        this.freezeFigure();
+                        this.throwFigure();
+                    } else {
+                        this.addScore(1);
+                        Ui.label('score').content = `score: ${this.score}`;
+                    }
                 }
-            }
-        });
-
-        // @ts-ignore
-        Input.listen(Input.keyboard.up, () => {
-            if (this.continue) {
-                this.rotateFigure();
-            }
-        });
-
-        Input.listen(Input.touchScreen.swipeLeft, () => {
-            if (this.continue) {
-                this.moveFigure(new Vector2d(-1, 0));
-            }
-        }, {continueOnHold: true, continueInterval: 200});
-
-        Input.listen(Input.touchScreen.swipeRight, () => {
-            if (this.continue) {
-                this.moveFigure(new Vector2d(1, 0));
-            }
-        }, {continueOnHold: true, continueInterval: 200});
-
-        Input.listen(Input.touchScreen.touch, () => {
-            if (this.currentFigure && this.continue) {
-                this.rotateFigure();
-            }
-        });
+            }).link('pause', () => {
+                this.togglePause();
+            });
 
         this.throwTimer = setTimeout(Tetris.moveFigureDown, 500 / (1 + Tetris.speed));
 
@@ -202,7 +181,7 @@ export class Tetris extends Game {
 
     public static end(gameover: boolean = false) {
         super.end();
-        Input.deaf();
+        Input.clear();
         Physics.clear();
 
         if (gameover) {
@@ -329,7 +308,7 @@ export class Tetris extends Game {
             this.drawFigure();
         }
     }
-    
+
     private static getRandomFigure(): Figure {
         // TODO такой рандом должен поддерживаться на уровне ядра
         if (!this.figuresRemaining.length) {

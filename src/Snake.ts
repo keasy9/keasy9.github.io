@@ -1,5 +1,5 @@
 import {Game} from "./core/Game.ts";
-import {Input, InputEvent} from "./core/Input.ts";
+import {Input} from "./core/Input.ts";
 import {Screen} from "./core/Screen.ts";
 import {Vector2d} from "./core/Vector2d.ts";
 import {Ui} from "./core/Ui.ts";
@@ -14,22 +14,26 @@ export class Snake extends Game {
     private static edgeDeath: boolean = false;
     private static loopDeath: boolean = false;
     private static prevMenu?: string | null;
-    private static readonly directions: {[index: string]: {vector: Vector2d, opposite: string}} = {
+    private static readonly directions: {[index: string]: {vector: Vector2d, opposite: string, key: string}} = {
         up: {
             vector: new Vector2d(0, -1),
             opposite: 'down',
+            key: 'w',
         },
         right: {
             vector: new Vector2d(1, 0),
             opposite: 'left',
+            key: 'd',
         },
         down: {
             vector: new Vector2d(0, 1),
             opposite: 'up',
+            key: 's',
         },
         left: {
             vector: new Vector2d(-1, 0),
             opposite: 'right',
+            key: 'a',
         },
     };
 
@@ -58,7 +62,7 @@ export class Snake extends Game {
             this.drawBody();
         }
 
-        Ui.on(new Vector2d(Screen.width - 4, 1)).button('pause', 'pauseButton.png').event = Input.keyboard.key('escape');
+        Ui.on(new Vector2d(Screen.width - 4, 1)).button('pause', 'pauseButton.png').link('escape');
         Ui.button('pause').scale = 2;
         Ui.on(new Vector2d(1, 1)).label('score').content = `score ${this.score}`;
 
@@ -71,14 +75,16 @@ export class Snake extends Game {
         super.begin();
 
         for (const [dirName, dir] of Object.entries(this.directions)) {
-            Input.listen((<InputEvent>Input.keyboard[dirName]), () => {
-                if (this.continue && this.direction !== dir.opposite) {
-                    this.nextDirection = dirName;
-                }
-            });
+            Input.bind(Input.keyboard.key(`arrow${dirName}`), dirName)
+                .bind(Input.keyboard.key(dir.key), dirName)
+                .link(dirName, () => {
+                    if (this.continue && this.direction !== dir.opposite) {
+                        this.nextDirection = dirName;
+                    }
+                });
         }
 
-        Input.listen(Input.keyboard.key('escape'), () => {
+        Input.bind(Input.keyboard.key('escape'), 'pause').link('pause', () => {
             if (this.prevMenu) {
                 Ui.menu(this.prevMenu).open();
                 this.prevMenu = null;
@@ -142,7 +148,7 @@ export class Snake extends Game {
         this.continue = false;
         delete this.apple;
         this.body = [];
-        Input.deaf();
+        Input.clear();
 
         if (gameover) {
             Ui.menu('gameover').label('score').text = `score: ${this.score}`;

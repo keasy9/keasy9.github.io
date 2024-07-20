@@ -1,4 +1,4 @@
-import {Input, InputEvent} from "./Input.ts";
+import {Input, InputType} from "./Input.ts";
 import {Sound} from "./Sound.ts";
 import {Vector2d} from "./Vector2d.ts";
 import {Screen} from "./Screen.ts";
@@ -312,9 +312,9 @@ class NavigationMenuElement extends LabelMenuElement {
         let elem: HTMLElement = this.htmlElement,
             upDirection = false;
 
-        if (Input.keyboard.up(event)) {
+        if (event.key === 'w' || event.key === 'ArrowUp') {
             upDirection = true;
-        } else if (!Input.keyboard.down(event)) {
+        } else if (!(event.key === 's' || event.key === 'ArrowDown')) {
             return;
         }
 
@@ -352,7 +352,7 @@ class ButtonMenuElement extends NavigationMenuElement {
     }
 
     protected onkeydown(event: KeyboardEvent) {
-        if (Input.keyboard.key('enter')(event) || Input.keyboard.key('space')(event)) {
+        if (event.key === 'enter' || event.key === 'space') {
             this.htmlElement.click();
         } else {
             super.onkeydown(event);
@@ -398,7 +398,7 @@ class SwitchMenuElement extends NavigationMenuElement {
     }
 
     protected onkeydown(event: KeyboardEvent) {
-        if (Input.keyboard.key('enter')(event) || Input.keyboard.key('space')(event)) {
+        if (event.key === 'enter' || event.key === 'space') {
             playSound();
             this.state = !this._state;
         } else {
@@ -482,13 +482,13 @@ class SliderMenuElement extends NavigationMenuElement {
     }
 
     protected onkeydown(event: KeyboardEvent) {
-        if (Input.keyboard.right(event)) {
+        if (event.key === 'd' || event.key === 'ArrowRight') {
             this.value = Math.round((this._value + 0.1) * 10) / 10;
             if (this.onchange !== undefined) {
                 playSound();
                 this.onchange(this.value);
             }
-        } else if (Input.keyboard.left(event)) {
+        } else if (event.key === 'a' || event.key === 'ArrowLeft') {
             this.value = Math.round((this._value - 0.1) * 10) / 10;
             if (this.onchange !== undefined) {
                 playSound();
@@ -646,13 +646,13 @@ class SelectionMenuElement extends NavigationMenuElement {
     }
 
     protected onkeydown(event: KeyboardEvent) {
-        if (Input.keyboard.right(event)) {
+        if (event.key === 'd' || event.key === 'ArrowRight') {
             this.nextValue();
             if (this.onchange !== undefined) {
                 playSound();
                 this.onchange(this._value!);
             }
-        } else if (Input.keyboard.left(event)) {
+        } else if (event.key === 'a' || event.key === 'ArrowLeft') {
             this.previousValue();
             if (this.onchange !== undefined) {
                 playSound();
@@ -687,26 +687,23 @@ class UiElement {
 }
 
 class UiButton extends UiElement {
-    private _event?: ((event: Event) => boolean) | null;
+    private binding: string;
 
-    public set event(event: InputEvent | null) {
-        if (event === null) {
-            this.htmlElement.onclick = null;
-            window.removeEventListener('keyup', (e) => { this.onKeyDown(e); });
-            window.removeEventListener('keydown', (e) => { this.onKeyDown(e); });
-
-        } else {
-            this.htmlElement.onclick = () => { Input.trigger(event); }
-            window.addEventListener('keyup', (e) => { this.onKeyDown(e); });
-            window.addEventListener('keydown', (e) => { this.onKeyDown(e); });
-        }
-        this._event = event;
+    constructor(protected readonly htmlElement: HTMLElement, protected name: string) {
+        super(htmlElement, name);
+        this.binding = `ui_${this.name}_click`;
     }
 
-    protected onKeyDown(event: KeyboardEvent) {
-        if (this._event && this._event(event)) {
-            this.htmlElement.classList.toggle('active', event.type === 'keydown');
-        }
+    public link(key: string) {
+        Input.bind(Input.keyboard.key(key, {type: InputType.Both}), this.binding).link(this.binding, () => {
+            this.htmlElement.classList.toggle('active');
+        });
+        this.htmlElement.onclick = () => Input.trigger(Input.keyboard.key(key));
+    }
+
+    public unlink() {
+        Input.unlink(this.binding);
+        this.htmlElement.onclick = null;
     }
 }
 
